@@ -11,14 +11,14 @@ import qcportal
 import qcengine
 import matplotlib.pyplot as plt
 
-from openmm import Platform, VerletIntegrator, LocalEnergyMinimizer
+from openmm import Platform, VerletIntegrator, LocalEnergyMinimizer, NonbondedForce
 from openmm.app import Simulation
 from openmm.unit import picosecond, kilojoules_per_mole, nanometer
 from openff.toolkit.topology import Molecule, Topology
 from openff.toolkit.typing.engines.smirnoff import ForceField
 from openff.qcsubmit.results import OptimizationResultCollection
 
-from src.geometry import compute_internal_coordinates, compute_tfd_from_coords
+from src.geometry import compute_internal_coordinates, compute_tfd_from_coords, kabsch_align
 from src.stats    import freedman_diaconis_bins, histogram_cdf
 from src.io       import BenchmarkResults
 
@@ -131,11 +131,9 @@ def get_espaloma_model():
         _esp_model = model
     return _esp_model, _espaloma_mod, _torch_mod
 
-
 def get_forcefield():
     ff = ForceField("openff-2.2.1.offxml")
     return ff
-
 
 # -----------------------------------------------------------------------------
 # OpenMM simulation helper
@@ -147,7 +145,6 @@ def make_simulation(topology, system):
     properties = {"Threads": str(THREADS_PER_SIM)}
     sim = Simulation(topology, system, integrator, platform, properties)
     return sim
-
 
 # -----------------------------------------------------------------------------
 # Backend-specific system builders
@@ -170,7 +167,6 @@ def build_system_openff(mol, top):
     system = ff.create_openmm_system(top)
     return system, None
 
-
 # -----------------------------------------------------------------------------
 # Single-molecule computation
 # -----------------------------------------------------------------------------
@@ -182,11 +178,12 @@ def process_single_molecule(rec_id: int):
     final_molecule = entry.final_molecule
 
     name   = final_molecule.dict()["name"]
-    coords = np.asarray(final_molecule.dict()["geometry"], dtype=float) * ang_to_nm
     mol    = Molecule.from_qcschema(final_molecule)
     top    = Topology.from_molecules(molecules=[mol])
-    smiles = mol.to_smiles()
-    qm_energy = entry.dict()["energies"][-1] * 2625.5 # To kJ/mol
+    conf      = mol.conformers[0]
+    coords_qm = conf.m_as(conf.units) # This is in Angstroms
+    smiles = mol.to_smiles(mapped=True)
+    qm_energy = entry.dict()["energies"][-1] #* 2625.5 # To kJ/mol
 
     if backend == "espaloma":
         system, mgraph = build_system_espaloma(mol, top)
@@ -195,45 +192,43 @@ def process_single_molecule(rec_id: int):
         mgraph = None
     else:
         raise ValueError(f"Unknown backend {_BACKEND!r}")
+    
+    for force in system.getForces():
+        if isinstance(force, NonbondedForce):
+            force.setNonbondedMethod(NonbondedForce.NoCutoff)
 
     simulation = make_simulation(top, system)
-    simulation.context.setPositions(coords)
+    simulation.context.setPositions(coords_qm * 0.1) # This expects coords in nm
 
     # Initial state
     state  = simulation.context.getState(getEnergy=True, getForces=True, getPositions=True)
     energy = state.getPotentialEnergy().value_in_unit(kilojoules_per_mole)
-    forces = state.getForces(asNumpy=True)
-    forces = forces.value_in_unit(kilojoules_per_mole / nanometer).astype(np.float32)
-    coords0 = state.getPositions(asNumpy=True)
-    coords0 = coords0.value_in_unit(nanometer).astype(np.float32)
-    ic0     = compute_internal_coordinates(mol, coords0)
+    ic0    = compute_internal_coordinates(mol, coords_qm)
 
     # Minimize
     LocalEnergyMinimizer.minimize(
         simulation.context,
-        tolerance=100 * kilojoules_per_mole / nanometer,
-        maxIterations=10_000,
+        tolerance=5e-9 * kilojoules_per_mole / nanometer,
+        maxIterations=1500,
     )
 
     # Minimized state
     state_minim = simulation.context.getState(getEnergy=True, getForces=True, getPositions=True)
     energy_min  = state_minim.getPotentialEnergy().value_in_unit(kilojoules_per_mole)
-    forces_min  = state_minim.getForces(asNumpy=True)
-    forces_min  = forces_min.value_in_unit(kilojoules_per_mole / nanometer).astype(np.float32)
-    coords1     = state_minim.getPositions(asNumpy=True)
-    coords1     = coords1.value_in_unit(nanometer).astype(np.float32)
-    ic1         = compute_internal_coordinates(mol, coords1)
+    coords_min  = state_minim.getPositions(asNumpy=True)
+    coords_min  = kabsch_align(coords_qm, coords_min.value_in_unit(nanometer).astype(np.float32) * 10) # Back to angstroms
+    ic1         = compute_internal_coordinates(mol, coords_min)
 
     # RMSDs
-    rmsd_cart      = compute_rmsd(coords1, coords0)
+    rmsd_cart      = compute_rmsd(coords_min, coords_qm)
     rmsd_bonds     = rmsd_1d(ic1["bonds"],     ic0["bonds"])
     rmsd_angles    = rmsd_periodic(ic1["angles"],    ic0["angles"])
     rmsd_propers   = rmsd_periodic(ic1["propers"],   ic0["propers"])
     rmsd_impropers = rmsd_periodic(ic1["impropers"], ic0["impropers"])
-    tfd            = compute_tfd_from_coords(mol, coords0, coords1)
+    tfd            = compute_tfd_from_coords(mol, coords_qm, coords_min)
 
     # Clean up
-    del state, state_minim, forces, forces_min, ic0, ic1
+    del state, state_minim, ic0, ic1
     del system, simulation
     if mgraph is not None:
         del mgraph
@@ -242,8 +237,8 @@ def process_single_molecule(rec_id: int):
     return {
         "name": name,
         "smiles":smiles,
-        "coords":{"qm":coords0,
-                  "min":coords1},
+        "coords":{"qm":coords_qm,
+                  "min":coords_min},
         "rmsd_cart": rmsd_cart,
         "rmsd_bonds": rmsd_bonds,
         "rmsd_angles": rmsd_angles,
@@ -254,7 +249,6 @@ def process_single_molecule(rec_id: int):
         "energy_min": energy_min,
         "tfd":tfd,
     }
-
 
 # -----------------------------------------------------------------------------
 # Batch worker + helpers
@@ -297,7 +291,7 @@ def main(backend: str, max_mols: int | None = None):
     results = dataset.entries[QCARCHIVE_URL]
     rec_ids = [result.record_id for result in results]
 
-    if max_mols is not None:
+    if max_mols != 0:
         rec_ids = rec_ids[:max_mols]
 
     batches = list(chunk_list(rec_ids, BATCH_SIZE))
@@ -377,7 +371,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--max-mols",
         type=int,
-        default=1,
+        default=0,
         help="Optional cap on number of molecules to process.",
     )
     parser.add_argument(
@@ -395,11 +389,11 @@ if __name__ == "__main__":
         print(f"Saved benchmark results to {args.out}")
 
     # Example plotting
-    graph_rmsd(rmsd_array[:, 0], title="Structure", xlabel="RMSD / nm")
-    graph_rmsd(rmsd_array[:, 1], title="Bonds",     xlabel="RMSD / nm")
-    graph_rmsd(rmsd_array[:, 2], title="Angles",    xlabel="RMSD / rad")
-    graph_rmsd(rmsd_array[:, 3], title="Propers",   xlabel="RMSD / rad")
-    graph_rmsd(rmsd_array[:, 4], title="Impropers", xlabel="RMSD / rad")
-    graph_rmsd(rmsd_array[:, 5], title="TFD",       xlabel="TFD", ylabel="P(TFD)", ylabel_2="CDF(TFD)")
+    graph_rmsd(rmsd_array[:, 0], title = "Structure", xlabel="RMSD / nm")
+    graph_rmsd(rmsd_array[:, 1], title = "Bonds",     xlabel="RMSD / nm")
+    graph_rmsd(rmsd_array[:, 2], title = "Angles",    xlabel="RMSD / rad")
+    graph_rmsd(rmsd_array[:, 3], title = "Propers",   xlabel="RMSD / rad")
+    graph_rmsd(rmsd_array[:, 4], title = "Impropers", xlabel="RMSD / rad")
+    graph_rmsd(rmsd_array[:, 5], title = "TFD",       xlabel="TFD", ylabel="P(TFD)", ylabel_2="CDF(TFD)")
 
     plt.show()
