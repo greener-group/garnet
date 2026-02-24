@@ -1,0 +1,281 @@
+
+################################################################################
+
+ PACKMOL - Packing optimization for the automated generation of
+ starting configurations for molecular dynamics simulations.
+ 
+                                                             Version 21.1.0 
+
+################################################################################
+
+  Packmol must be run with: packmol < inputfile.inp 
+
+  Userguide at: http://m3g.iqm.unicamp.br/packmol 
+
+  Reading input file... (Control-C aborts)
+  Types of coordinate files specified: pdb
+  Periodic boundary condition activated: 
+    Minimum coordinates:     0.00    0.00    0.00
+    Maximum coordinates:    30.00   30.00   30.00
+  Seed for random number generator:      1234567
+  Output file: condensed_data/starting_structures/mixing_single_C=CCCCC.pdb
+  Reading coordinate file: condensed_data/monomers/C=CCCCC.pdb
+  Number of independent structures:            1
+  The structures are: 
+  Structure            1 :condensed_data/monomers/C=CCCCC.pdb(          18  atoms)
+  Maximum number of GENCAN loops for all molecule packing:          200
+  Distance tolerance:    2.0000000000000000     
+  Warning: Type of residue numbering not set for structure            1
+  Residue numbering set for structure            1 :           0
+  Swap chains of molecules of structure            1 : F
+  Number of molecules of type            1 :          129
+  Total number of restrictions:            0
+  Total number of atoms:         2322
+  Total number of molecules:          129
+  Number of fixed molecules:            0
+  Number of free molecules:          129
+  Number of variables:          774
+  Total number of fixed atoms:            0
+  PBC on: Constraint automatically added to non-fixed atoms:
+  -> inside box     0.00    0.00    0.00   30.00   30.00   30.00
+  Updated total number of restrictions:            1
+  Maximum internal distance of type            1 :    7.4930804079497246     
+  All atoms must be within these coordinates: 
+   x: [   -993.60000000000002      ,    1006.4000000000000       ] 
+   y: [   -997.42770039750849      ,    1002.5722996024915       ] 
+   z: [   -997.32413534069929      ,    1002.6758646593007       ] 
+  If the system is larger than this, increase the sidemax parameter. 
+
+################################################################################
+
+  Building initial approximation ... 
+
+################################################################################
+
+  Adjusting initial point to fit the constraints 
+
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+
+  Molecules of type:            1
+
+  Packing:|0                                                        100%|
+          |*************************************************************|
+
+
+  Restraint-only function value:    2.2029235945379484E-002
+  Maximum violation of the restraints:    9.5612857277324152E-003
+
+--------------------------------------------------------------------------------
+
+  Rescaling maximum and minimum coordinates... 
+  Mininum and maximum coordinates after constraint fitting: 
+   x: [   -8.5749187142472108E-003 ,    30.062067902931428       ] 
+   y: [   -9.7781827185486850E-002 ,    30.038753020840055       ] 
+   z: [   -9.6638716629710020E-003 ,    30.060896943383000       ] 
+  Computing size of patches... 
+  Number of cells in each direction and cell sides: 
+   x:           13  cells of size    2.3076923076923075     
+   y:           13  cells of size    2.3076923076923075     
+   z:           13  cells of size    2.3076923076923075     
+  Cell-system length:   30.00000  30.00000  30.00000
+  Reseting center of mass... 
+
+--------------------------------------------------------------------------------
+
+  Setting initial trial coordinates ... 
+
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+
+  Molecules of type:            1
+  Adjusting random positions to fit the constraints. 
+  Packing:|0                                                        100%|
+          |*********
+  Restraint-only function value:    2.8194792230696952E-004
+  Maximum violation of the restraints:    2.2354627467080984E-004
+
+################################################################################
+
+  Objective function at initial point:    16007.801184431046     
+
+################################################################################
+
+  Packing molecules of type:            1
+
+################################################################################
+
+
+--------------------------------------------------------------------------------
+
+  Starting GENCAN loop:            0
+  Scaling radii by:    1.1000000000000001     
+
+  Packing:|0                                                        100%|
+          |*************************************************************|
+
+  Function value from last GENCAN loop: f = .90899E+02
+  Best function value before: f = .16008E+05
+  Improvement from best function value:    99.43 %
+  Improvement from last loop:    99.43 %
+  Maximum violation of target distance:     2.390532
+  Maximum violation of the constraints: .21708E+01
+  All-type function value: .90899E+02
+
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+
+  Starting GENCAN loop:            1
+  Scaling radii by:    1.1000000000000001     
+
+  Packing:|0                                                        100%|
+          |*************************************************************|
+
+  Function value from last GENCAN loop: f = .12400E+02
+  Best function value before: f = .90899E+02
+  Improvement from best function value:    86.36 %
+  Improvement from last loop:    86.36 %
+  Maximum violation of target distance:     0.589975
+  Maximum violation of the constraints: .98342E+00
+  All-type function value: .12400E+02
+
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+
+  Starting GENCAN loop:            2
+  Scaling radii by:    1.1000000000000001     
+
+  Packing:|0                                                        100%|
+          |*************************************************************|
+
+  Function value from last GENCAN loop: f = .23378E+01
+  Best function value before: f = .12400E+02
+  Improvement from best function value:    81.15 %
+  Improvement from last loop:    81.15 %
+  Maximum violation of target distance:     0.000000
+  Maximum violation of the constraints: .34493E+00
+  All-type function value: .23378E+01
+
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+
+  Starting GENCAN loop:            3
+  Scaling radii by:    1.1000000000000001     
+
+  Packing:|0                                                        100%|
+          |*************************************************************|
+
+  Function value from last GENCAN loop: f = .30481E+00
+  Best function value before: f = .23378E+01
+  Improvement from best function value:    86.96 %
+  Improvement from last loop:    86.96 %
+  Maximum violation of target distance:     0.000000
+  Maximum violation of the constraints: .11977E+00
+  All-type function value: .30481E+00
+
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+
+  Starting GENCAN loop:            4
+  Scaling radii by:    1.1000000000000001     
+
+  Packing:|0                                                        100%|
+          |*************************************************************|
+
+  Function value from last GENCAN loop: f = .71466E-01
+  Best function value before: f = .30481E+00
+  Improvement from best function value:    76.55 %
+  Improvement from last loop:    76.55 %
+  Maximum violation of target distance:     0.000000
+  Maximum violation of the constraints: .39823E-01
+  All-type function value: .71466E-01
+
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+
+  Starting GENCAN loop:            5
+  Scaling radii by:    1.1000000000000001     
+
+  Packing:|0                                                        100%|
+          |*************************************************************|
+
+  Function value from last GENCAN loop: f = .17201E-01
+  Best function value before: f = .71466E-01
+  Improvement from best function value:    75.93 %
+  Improvement from last loop:    75.93 %
+  Maximum violation of target distance:     0.000000
+  Maximum violation of the constraints: .11658E-01
+  All-type function value: .17201E-01
+
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+
+  Starting GENCAN loop:            6
+  Scaling radii by:    1.1000000000000001     
+
+  Packing:|0                                                        100%|
+          |************
+
+  Function value from last GENCAN loop: f = .13333E-01
+  Best function value before: f = .17201E-01
+  Improvement from best function value:    22.49 %
+  Improvement from last loop:    22.49 %
+  Maximum violation of target distance:     0.000000
+  Maximum violation of the constraints: .92088E-02
+  Current structure written to file: condensed_data/starting_structures/mixing_single_C=CCCCC.pdb
+--------------------------------------------------------------------------------
+  Packing solved for molecules of type           1
+  Objective function value:    1.3333216403459075E-002
+  Maximum violation of target distance:    0.0000000000000000     
+  Max. constraint violation:    9.2088126754000781E-003
+--------------------------------------------------------------------------------
+
+################################################################################
+
+  Packing all molecules together 
+
+################################################################################
+
+
+  Initial approximation is a solution. Nothing to do. 
+
+  Solution written to file: condensed_data/starting_structures/mixing_single_C=CCCCC.pdb
+
+################################################################################
+
+                                 Success! 
+              Final objective function value: .16063E-01
+              Maximum violation of target distance:   0.000000
+              Maximum violation of the constraints: .92088E-02
+
+--------------------------------------------------------------------------------
+
+              Please cite this work if Packmol was useful: 
+
+           L. Martinez, R. Andrade, E. G. Birgin, J. M. Martinez, 
+         PACKMOL: A package for building initial configurations for
+                   molecular dynamics simulations. 
+        Journal of Computational Chemistry, 30(13) pp. 2157-2164, 2009.
+                  https://doi.org/10.1002/jcc.21224
+
+################################################################################
+
+   Running time:    3.30148196      seconds. 
+
+--------------------------------------------------------------------------------
+
+

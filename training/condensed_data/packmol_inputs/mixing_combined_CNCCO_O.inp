@@ -1,0 +1,11 @@
+tolerance 2.0
+output condensed_data/starting_structures/mixing_combined_CNCCO_O.pdb
+filetype pdb
+connect yes
+pbc 30.0 30.0 30.0
+structure condensed_data/monomers/CNCCO.pdb
+  number 169
+end structure
+structure condensed_data/monomers/O.pdb
+  number 169
+end structure

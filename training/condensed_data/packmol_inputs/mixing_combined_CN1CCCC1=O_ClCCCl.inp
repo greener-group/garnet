@@ -1,0 +1,11 @@
+tolerance 2.0
+output condensed_data/starting_structures/mixing_combined_CN1CCCC1=O_ClCCCl.pdb
+filetype pdb
+connect yes
+pbc 30.0 30.0 30.0
+structure condensed_data/monomers/CN1CCCC1=O.pdb
+  number 93
+end structure
+structure condensed_data/monomers/ClCCCl.pdb
+  number 93
+end structure
