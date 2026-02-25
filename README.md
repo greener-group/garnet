@@ -20,6 +20,11 @@ pip install torch torch_geometric igraph
 pip install git+https://github.com/openforcefield/openff-pablo.git@v0.2.0
 pip install garnetff
 ```
+Should you want to run the tests, you can run the following from this directory:
+```bash
+pip install pytest
+pytest
+```
 
 ### Assigning parameters
 
