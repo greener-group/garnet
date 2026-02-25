@@ -1,5 +1,8 @@
 # Garnet force field
 
+[![Build status](https://github.com/greener-group/garnet/actions/workflows/CI.yml/badge.svg)](https://github.com/greener-group/garnet/actions/workflows/CI.yml)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/greener-group/garnet/blob/main/LICENSE.md)
+
 If you use the force field, please cite the paper:
 
 ...
