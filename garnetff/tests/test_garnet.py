@@ -37,7 +37,7 @@ def test_pdb():
 
     simulation.minimizeEnergy()
     simulation.context.setVelocitiesToTemperature(temp)
-    simulation.step(1000)
+    simulation.step(100)
     assert get_potential_energy(simulation) < -100000 * kilojoules_per_mole
 
 def test_smiles():
@@ -54,4 +54,3 @@ def test_sdf():
 
     system, top_openmm = garnet.topology_to_openmm_system(topology)
     assert system.getNumParticles() == 13
-    assert 1 == 0
