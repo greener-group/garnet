@@ -112,6 +112,7 @@ If you want to use Garnet with simulation software other than OpenMM, you could 
 
 See the [training](/training/) directory for instructions on how to train the force field from scratch.
 Training made use of the [Molly.jl](https://juliamolsim.github.io/Molly.jl/stable) software.
+Validation scripts are in the [validation](/validation/) directory.
 
 ## Feedback
 
