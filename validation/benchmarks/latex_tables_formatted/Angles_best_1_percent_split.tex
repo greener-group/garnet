@@ -1,0 +1,36 @@
+\begin{table}[t]
+  \centering
+  \small
+  \setlength{\tabcolsep}{6pt}
+  \renewcommand{\arraystretch}{1.15}
+  \begin{tabular}{llrrrr}
+    \hline
+    Force field & Motif & $N_\mathrm{all}$ & $E_{\mathrm{low/high}}$ (Bayes) & $p_\mathrm{Fisher}$ & $P(E>1)$ \\
+    \hline
+    OpenFF & disulfide & 57 & 7.46\,[2.88, 19.80] & 0.0026 & 1.000 \\
+      & thiol & 37 & 5.65\,[1.65, 21.12] & 0.0529 & 0.993 \\
+      & alkene & 7235 & 1.70\,[1.44, 1.99] & $8.66\times 10^{-9}$ & 1.000 \\
+    \hline
+    Espaloma & aldehyde & 78 & 17.99\,[9.79, 32.79] & $2.20\times 10^{-11}$ & 1.000 \\
+      & disulfide & 57 & 7.47\,[2.88, 19.77] & 0.0026 & 1.000 \\
+      & thiol & 37 & 5.65\,[1.66, 21.30] & 0.0529 & 0.994 \\
+      & indazole & 2144 & 2.51\,[1.93, 3.24] & $2.73\times 10^{-9}$ & 1.000 \\
+      & indole & 3068 & 2.31\,[1.84, 2.87] & $2.21\times 10^{-10}$ & 1.000 \\
+      & oxazole & 1346 & 1.80\,[1.21, 2.66] & 0.0054 & 0.997 \\
+      & thiazole & 2969 & 1.56\,[1.18, 2.05] & 0.0026 & 0.999 \\
+      & imidazole & 10005 & 1.50\,[1.29, 1.72] & $3.86\times 10^{-7}$ & 1.000 \\
+      & pyrrole & 7533 & 1.48\,[1.24, 1.75] & $2.49\times 10^{-5}$ & 1.000 \\
+    \hline
+    MACE-OFF & acetal & 28 & 7.46\,[2.16, 26.21] & 0.0325 & 0.997 \\
+      & pyrazole & 494 & 2.62\,[1.61, 3.92] & $8.19\times 10^{-4}$ & 1.000 \\
+    \hline
+    Garnet & disulfide & 57 & 29.23\,[16.18, 53.60] & $1.48\times 10^{-14}$ & 1.000 \\
+      & thiol & 37 & 5.65\,[1.62, 21.26] & 0.0529 & 0.993 \\
+      & imide & 969 & 2.09\,[1.35, 3.19] & 0.0022 & 0.999 \\
+      & fused\_aromatic & 10545 & 1.80\,[1.58, 2.03] & $7.86\times 10^{-16}$ & 1.000 \\
+      & nitrile & 4315 & 1.77\,[1.43, 2.20] & $1.59\times 10^{-6}$ & 1.000 \\
+    \hline
+  \end{tabular}
+  \caption{Motif enrichment for lowest 1\% errors.}
+  \label{tab:split_angles_best}
+\end{table}
