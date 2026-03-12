@@ -1,18 +1,4 @@
 # Get force field parameters with trained model
-# Run from garnet conda environment
-
-# Setup repo: pip install, readme with examples (ligand, NA, PTM, some from test), training script + files
-# Pablo butanol fix: https://github.com/openforcefield/openff-pablo/issues/138
-# Pablo PTM example
-# Speed up isomorphism, special cases based on names?
-# Multi xml sim fails: https://github.com/openmm/openmm/issues/5154
-# Allow extra args passed to createSystem?
-# Print info
-# Indices as tensors/on GPU?
-# Vectorise charge calculation
-# Check dep versions, compare
-# Device
-# XML write header
 
 import torch
 import torch.nn as nn
