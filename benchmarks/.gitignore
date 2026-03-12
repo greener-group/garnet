@@ -1,0 +1,12 @@
+Models/
+.vscode/
+__pycache__
+install_env.sh
+build
+*pdb
+*png
+*ppm
+*pk
+*txt
+*hdf5
+*ipynb
