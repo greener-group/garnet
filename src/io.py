@@ -1,6 +1,122 @@
 import h5py
 import numpy as np
 
+from rdkit          import Chem
+from rdkit.Chem     import rdMolAlign
+from rdkit.Geometry import Point3D
+
+
+def _mol_from_smiles_match_natoms(smiles: str, n_atoms: int) -> Chem.Mol:
+    """
+    Build an RDKit Mol whose atom count matches n_atoms.
+    Tries AddHs first (common when coords include H), then without.
+    """
+    base = Chem.MolFromSmiles(smiles)
+    if base is None:
+        raise ValueError(f"RDKit failed to parse SMILES: {smiles!r}")
+
+    mol_h = Chem.AddHs(base, addCoords=False)
+    if mol_h.GetNumAtoms() == n_atoms:
+        return mol_h
+
+    if base.GetNumAtoms() == n_atoms:
+        return base
+
+    raise ValueError(
+        f"Atom-count mismatch for SMILES {smiles!r}: "
+        f"RDKit(AddHs)={mol_h.GetNumAtoms()}, RDKit(noHs)={base.GetNumAtoms()}, expected={n_atoms}. "
+        "This usually means your stored coords use a different atom ordering/explicit-H convention than SMILES."
+    )
+
+
+def _add_conformer_from_coords(mol: Chem.Mol, coords: np.ndarray) -> int:
+    """
+    Add a conformer to mol from coords (shape (N,3)), return conformer id.
+    """
+    coords = np.asarray(coords, dtype=float)
+    if coords.ndim != 2 or coords.shape[1] != 3:
+        raise ValueError(f"coords must have shape (N,3); got {coords.shape}")
+    if coords.shape[0] != mol.GetNumAtoms():
+        raise ValueError(
+            f"coords atom count {coords.shape[0]} != mol atom count {mol.GetNumAtoms()}"
+        )
+
+    conf = Chem.Conformer(mol.GetNumAtoms())
+    for i in range(mol.GetNumAtoms()):
+        x, y, z = coords[i]
+        conf.SetAtomPosition(i, Point3D(float(x), float(y), float(z)))
+    return mol.AddConformer(conf, assignId=True)
+
+
+def _pdb_single_model_two_chains(
+    mol: Chem.Mol,
+    conf_id_qm: int,
+    conf_id_ff: int,
+    chain_qm: str = "A",
+    chain_ff: str = "B",
+    remark_qm: str = "QM_MIN",
+    remark_ff: str = "FF_MIN",
+) -> str:
+    """
+    Single PDB MODEL containing two copies of the same molecule as two chains,
+    using two different conformers.
+    """
+    pdb_qm = Chem.MolToPDBBlock(mol, confId=conf_id_qm)
+    pdb_ff = Chem.MolToPDBBlock(mol, confId=conf_id_ff)
+
+    # Keep only coordinate-bearing records; drop CONECT/END/etc to avoid duplication
+    def atom_lines(pdb_block: str) -> list[str]:
+        out = []
+        for ln in pdb_block.splitlines():
+            if ln.startswith(("ATOM  ", "HETATM")):
+                out.append(ln)
+        return out
+
+    qm_lines = atom_lines(pdb_qm)
+    ff_lines = atom_lines(pdb_ff)
+
+    # Set chain IDs and renumber atom serials so the combined file is valid-ish
+    def set_chain_and_renumber(lines: list[str], chain_id: str, start_serial: int) -> list[str]:
+        out = []
+        serial = start_serial
+        for ln in lines:
+            # Atom serial is columns 7-11 (1-based); chain is column 22
+            ln = f"{ln[:6]}{serial:5d}{ln[11:]}"
+            if len(ln) >= 22:
+                ln = ln[:21] + chain_id[0] + ln[22:]
+            out.append(ln)
+            serial += 1
+        return out
+
+    qm_lines = set_chain_and_renumber(qm_lines, chain_qm, 1)
+    ff_lines = set_chain_and_renumber(ff_lines, chain_ff, 1 + len(qm_lines))
+
+    # Optional: shift residue numbers for the second chain so some viewers separate them cleanly
+    def bump_resseq(lines: list[str], delta: int) -> list[str]:
+        out = []
+        for ln in lines:
+            # resSeq is columns 23-26 (1-based) => indices 22:26
+            if len(ln) >= 26:
+                try:
+                    resseq = int(ln[22:26])
+                    ln = ln[:22] + f"{resseq + delta:4d}" + ln[26:]
+                except ValueError:
+                    pass
+            out.append(ln)
+        return out
+
+    ff_lines = bump_resseq(ff_lines, 1000)
+
+    header = [
+        f"REMARK   1 {remark_qm} (chain {chain_qm})",
+        f"REMARK   1 {remark_ff} (chain {chain_ff})",
+        "MODEL        1",
+    ]
+    footer = ["ENDMDL", "END"]
+
+    return "\n".join(header + qm_lines + ff_lines + footer) + "\n"
+
+
 class BenchmarkResults:
     """
     Compact container for benchmark results, with efficient HDF5 I/O.
@@ -177,3 +293,96 @@ class BenchmarkResults:
         start = self.offsets[idx]
         end   = self.offsets[idx + 1]
         return self.coords_min[start:end]
+
+    def save_aligned_qm_ff_pdb(
+        self,
+        idx: int,
+        filename: str,
+        align_to: str = "qm",
+        qm_chain: str = "A",
+        ff_chain: str = "B"):
+
+        """
+        Create a 2-model PDB for molecule/conformer `idx`:
+          - MODEL 1: QM-minimized (chain qm_chain)
+          - MODEL 2: FF-minimized (chain ff_chain)
+        with one aligned onto the other.
+
+        Parameters
+        ----------
+        idx : int
+            Index into this BenchmarkResults object (one record = one conformer).
+        filename : str
+            Output PDB path.
+        align_to : {"qm", "ff"}
+            Which structure is the reference frame.
+        qm_chain, ff_chain : str
+            Chain IDs to help visualize overlap in PyMOL/VMD/etc.
+        """
+        if align_to not in ("qm", "ff"):
+            raise ValueError("align_to must be 'qm' or 'ff'")
+
+        smiles = self.smiles[idx]
+        n_atoms = int(self.n_atoms[idx])
+
+        coords_qm = self.get_coords_qm_for_mol(idx)
+        coords_ff = self.get_coords_min_for_mol(idx)
+
+        mol = _mol_from_smiles_match_natoms(smiles, n_atoms)
+
+        # Add conformers: (qm, ff)
+        qm_cid = _add_conformer_from_coords(mol, coords_qm)
+        ff_cid = _add_conformer_from_coords(mol, coords_ff)
+
+        # Align one conformer onto the other in-place
+        if align_to == "qm":
+            rdMolAlign.AlignMol(mol, mol, prbCid=ff_cid, refCid=qm_cid)
+        else:
+            rdMolAlign.AlignMol(mol, mol, prbCid=qm_cid, refCid=ff_cid)
+
+        pdb = _pdb_single_model_two_chains(
+            mol,
+            conf_id_qm=qm_cid,
+            conf_id_ff=ff_cid,
+            chain_qm=qm_chain,
+            chain_ff=ff_chain,
+            remark_qm="QM_MIN",
+            remark_ff="FF_MIN",
+        )
+
+        with open(filename, "w", encoding="utf-8") as f:
+            f.write(pdb)
+
+    def save_aligned_qm_ff_pdbs(
+        self,
+        idx: int,
+        qm_filename: str,
+        ff_filename: str,
+        align_to: str = "qm",):
+        """
+        Write two separate PDBs (QM and FF) in the same reference frame.
+        """
+        if align_to not in ("qm", "ff"):
+            raise ValueError("align_to must be 'qm' or 'ff'")
+
+        smiles = self.smiles[idx]
+        n_atoms = int(self.n_atoms[idx])
+
+        coords_qm = self.get_coords_qm_for_mol(idx)
+        coords_ff = self.get_coords_min_for_mol(idx)
+
+        mol = _mol_from_smiles_match_natoms(smiles, n_atoms)
+        qm_cid = _add_conformer_from_coords(mol, coords_qm)
+        ff_cid = _add_conformer_from_coords(mol, coords_ff)
+
+        # Align in-place
+        if align_to == "qm":
+            rdMolAlign.AlignMol(mol, mol, prbCid=ff_cid, refCid=qm_cid)
+        else:
+            rdMolAlign.AlignMol(mol, mol, prbCid=qm_cid, refCid=ff_cid)
+
+        # Write each conformer separately
+        with open(qm_filename, "w", encoding="utf-8") as f:
+            f.write(Chem.MolToPDBBlock(mol, confId=qm_cid))
+        with open(ff_filename, "w", encoding="utf-8") as f:
+            f.write(Chem.MolToPDBBlock(mol, confId=ff_cid))

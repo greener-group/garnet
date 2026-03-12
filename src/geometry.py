@@ -120,8 +120,8 @@ def compute_internal_coordinates(off_mol, coords):
     }
 
 def compute_tfd_from_coords(off_mol: Molecule,
-                            coords0_nm: np.ndarray,
-                            coords1_nm: np.ndarray) -> float:
+                            coords0_A: np.ndarray,
+                            coords1_A: np.ndarray) -> float:
     """
     Compute torsion fingerprint deviation (TFD) between two conformers
     of the same molecule using RDKit's implementation.
@@ -138,9 +138,6 @@ def compute_tfd_from_coords(off_mol: Molecule,
     float
         TFD value (0 = identical, ~1 = very different).
     """
-    # Convert coords to Å for RDKit
-    coords0_A = coords0_nm * 10.0
-    coords1_A = coords1_nm * 10.0
 
     n_atoms = coords0_A.shape[0]
 
@@ -168,3 +165,41 @@ def compute_tfd_from_coords(off_mol: Molecule,
     )
     # GetTFDBetweenConformers returns a list; here it's length 1
     return float(tfd_list[0])
+
+def kabsch_align(ref, target):
+    """
+    Align 'target' onto 'ref' using the Kabsch algorithm.
+
+    Parameters
+    ----------
+    ref : (N, 3) ndarray
+        Reference coordinates (fixed).
+    target : (N, 3) ndarray
+        Coordinates to be rotated/translated.
+
+    Returns
+    -------
+    aligned : (N, 3) ndarray
+        Target coordinates superimposed on ref.
+    """
+    ref = np.asarray(ref, dtype=np.float64)
+    target = np.asarray(target, dtype=np.float64)
+
+    ref_centroid = ref.mean(axis=0, keepdims=True)
+    tgt_centroid = target.mean(axis=0, keepdims=True)
+
+    ref_c = ref - ref_centroid
+    tgt_c = target - tgt_centroid
+
+    H = tgt_c.T @ ref_c
+    U, S, Vt = np.linalg.svd(H)
+    R = Vt.T @ U.T
+
+    # Proper rotation (avoid reflection)
+    if np.linalg.det(R) < 0.0:
+        Vt[-1, :] *= -1.0
+        R = Vt.T @ U.T
+
+    aligned = tgt_c @ R
+    aligned += ref_centroid
+    return aligned

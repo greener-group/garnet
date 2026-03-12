@@ -1,6 +1,2 @@
-class BMarkData:
-
-    def __init__(self):
-        
-        pass
+"""Deprecated module kept for compatibility."""
     

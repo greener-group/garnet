@@ -6,30 +6,30 @@ from scipy.stats import fisher_exact
 motifs = {
 
     # --- Carbonyl-containing groups ---
-    "aldehyde"        : Chem.MolFromSmarts("[CX3H1](=O)[#6]"),
-    "ketone"          : Chem.MolFromSmarts("[CX3](=O)[#6]"),
-    "carboxylic_acid" : Chem.MolFromSmarts("C(=O)[OH]"),
-    "ester"           : Chem.MolFromSmarts("C(=O)O[#6]"),
-    "amide"           : Chem.MolFromSmarts("C(=O)N"),
-    "acyl_halide"     : Chem.MolFromSmarts("C(=O)[Cl,Br,I,F]"),
-    "anhydride"       : Chem.MolFromSmarts("C(=O)OC(=O)"),
-    "imide"           : Chem.MolFromSmarts("C(=O)N(C=O)"),
-    "urea"            : Chem.MolFromSmarts("N-C(=O)-N"),
-    "carbonate"       : Chem.MolFromSmarts("O-C(=O)-O"),
-    "thioester"       : Chem.MolFromSmarts("C(=O)S[#6]"),
-    "thiourea"        : Chem.MolFromSmarts("N-C(=S)-N"),
-    "isocyanate"      : Chem.MolFromSmarts("N=C=O"),
+    "aldehyde"        : Chem.MolFromSmarts("[CH1](=O)[#6]"),
+    "ketone"          : Chem.MolFromSmarts("[#6]C(=O)[#6]"),
+    "carboxylic_acid" : Chem.MolFromSmarts("[CX3](=O)[OH]"),
+    "ester"           : Chem.MolFromSmarts("[CX3](=O)O[#6]"),
+    "amide"           : Chem.MolFromSmarts("[CX3](=O)N"),
+    "acyl_halide"     : Chem.MolFromSmarts("[CX3](=O)[Cl,Br,I,F]"),
+    "anhydride"       : Chem.MolFromSmarts("[CX3](=O)O[CX3](=O)"),
+    "imide"           : Chem.MolFromSmarts("[CX3](=O)N([CX3]=O)"),
+    "urea"            : Chem.MolFromSmarts("NC(=O)N"),
+    "carbonate"       : Chem.MolFromSmarts("OC(=O)O"),
+    "thioester"       : Chem.MolFromSmarts("[CX3](=O)S[#6]"),
+    "thiourea"        : Chem.MolFromSmarts("NC(=S)N"),
+    "isocyanate"      : Chem.MolFromSmarts("[NX2]=C=O"),
 
     # --- Alcohols, thiols, amines, etc. ---
-    "alcohol"         : Chem.MolFromSmarts("[CX4][OX2H]"),
-    "primary_amine"   : Chem.MolFromSmarts("[NX3;H2,H1;!$(NC=O)]"),
-    "enol"            : Chem.MolFromSmarts("C=C[OH]"),
-    "enolate"         : Chem.MolFromSmarts("C=C[O-]"),
-    "secondary_amine" : Chem.MolFromSmarts("[NX3;H1;!$(NC=O)]"),
-    "tertiary_amine"  : Chem.MolFromSmarts("[NX3;H0;!$(NC=O)]"),
-    "aniline"         : Chem.MolFromSmarts("c[NH2,NH,N]"),
-    "phenol"          : Chem.MolFromSmarts("c[OH]"),
-    "thiol"           : Chem.MolFromSmarts("[CX4][SX2H]"),
+    "alcohol"         : Chem.MolFromSmarts("[CX4][OH]"),
+    "primary_amine"   : Chem.MolFromSmarts("[N;H1,H2;!$(NC(=O))][#6]"),
+    "enol"            : Chem.MolFromSmarts("[#6][#6]([OH])=[#6]"),
+    "enoxide"         : Chem.MolFromSmarts("[#6][#6]([O-])=[#6]"),
+    "secondary_amine" : Chem.MolFromSmarts("[NX3;H1;!$(NC(=O));!-]"),
+    "tertiary_amine"  : Chem.MolFromSmarts("[NX3;H0;!$(NC(=O));!-]"),
+    "aniline"         : Chem.MolFromSmarts("c[NX3H2,NX2H1-,NX4H3+]"),
+    "phenol"          : Chem.MolFromSmarts("c[OX2H,OX1-,OX3H2+]"),
+    "thiol"           : Chem.MolFromSmarts("[#6][SX2H,SX1-]"),
     "disulfide"       : Chem.MolFromSmarts("S-S"),
 
     # --- Multiple bonds / reactive groups ---
@@ -37,20 +37,20 @@ motifs = {
     "alkyne"          : Chem.MolFromSmarts("C#C"),
     "conjugated"      : Chem.MolFromSmarts("C=C-C=C"),
     "allene"          : Chem.MolFromSmarts("C=C=C"),
-    "nitrile"         : Chem.MolFromSmarts("C#N"),
-    "isothiocyanate"  : Chem.MolFromSmarts("N=C=S"),
+    "nitrile"         : Chem.MolFromSmarts("[CX2]#N"),
+    "isothiocyanate"  : Chem.MolFromSmarts("[NX2]=C=S"),
 
     # --- Aromatics and rings ---
     "aromatic_ring"   : Chem.MolFromSmarts("a1aaaaa1"),
     "benzene"         : Chem.MolFromSmarts("c1ccccc1"),
-    "phenyl"          : Chem.MolFromSmarts("[cH,CH]-c1ccccc1"),
+    "phenyl"          : Chem.MolFromSmarts("[cX3]1ccccc1"),
     "fused_aromatic"  : Chem.MolFromSmarts("a1aaa2aaaaa2a1"),
 
     # --- Heterocycles: 5- and 6-membered ---
-    "pyridine"        : Chem.MolFromSmarts("n1ccccc1"),
-    "pyrimidine"      : Chem.MolFromSmarts("n1cnccc1"),
-    "pyrrole"         : Chem.MolFromSmarts("n1cccc1"),
-    "imidazole"       : Chem.MolFromSmarts("c1cncn1"),
+    "pyridine"        : Chem.MolFromSmarts("c1ncccc1"),
+    "pyrimidine"      : Chem.MolFromSmarts("c1ncncc1"),
+    "pyrrole"         : Chem.MolFromSmarts("c1nccc1"),
+    "imidazole"       : Chem.MolFromSmarts("c1ncnc1"),
     "pyrazole"        : Chem.MolFromSmarts("c1nncc1"),
     "thiazole"        : Chem.MolFromSmarts("c1ncsc1"),
     "oxazole"         : Chem.MolFromSmarts("c1ncoc1"),
@@ -59,24 +59,23 @@ motifs = {
     "indazole"        : Chem.MolFromSmarts("c1ccc2nncc2c1"),
 
     # --- Charged groups ---
-    "phosphate"       : Chem.MolFromSmarts("P(=O)([OX1])([OX1])[O-]"),
-    "depr_alcohol"    : Chem.MolFromSmarts("[CX4][O-]"),
+    "phosphate"       : Chem.MolFromSmarts("[P;X4](=O)([OX1,OX2H,OX2H0-])([OX1,OX2H,OX2H0-])[OX1,OX2H,OX2H0-]"),
     "quaternary_amine": Chem.MolFromSmarts("[NX4+]"),
     "sulfonium"       : Chem.MolFromSmarts("[SX3+]"),
-    "carboxylate"     : Chem.MolFromSmarts("C(=O)[O-]"),
-    "sulfonate"       : Chem.MolFromSmarts("S(=O)(=O)[O-]"),
+    "carboxylate"     : Chem.MolFromSmarts("[CX3](=O)[O-]"),
+    "sulfonate"       : Chem.MolFromSmarts("[SX4](=O)(=O)[O-]"),
 
     # --- Sulfur & phosphorus chemistry ---
-    "sulfide"         : Chem.MolFromSmarts("S-C"),
+    "sulfide"         : Chem.MolFromSmarts("[#6]S[#6]"),
     "sulfoxide"       : Chem.MolFromSmarts("S(=O)[#6]"),
-    "sulfone"         : Chem.MolFromSmarts("S(=O)(=O)[#6]"),
-    "sulfonamide"     : Chem.MolFromSmarts("S(=O)(=O)N"),
-    "phosphonate"     : Chem.MolFromSmarts("[PX4]([OX2])([OX2])(=O)"),
+    "sulfone"         : Chem.MolFromSmarts("[SX4](=O)(=O)"),
+    "sulfonamide"     : Chem.MolFromSmarts("[SX4](=O)(=O)[NX3]"),
+    "phosphonate"     : Chem.MolFromSmarts("[PX4](=O)([OX2])([OX2])"),
 
     # --- Halogens & organometallic flags ---
     "halogen"         : Chem.MolFromSmarts("[F,Cl,Br,I]"),
     "fluorinated_C"   : Chem.MolFromSmarts("C(F)(F)F"),
-    "boronic_acid"    : Chem.MolFromSmarts("B(O)O"),
+    "boronic_acid"    : Chem.MolFromSmarts("[BX3](O)(O)"),
 
     # --- Miscellaneous motifs ---
     "ether"           : Chem.MolFromSmarts("C-O-C"),
@@ -84,14 +83,8 @@ motifs = {
     "epoxide"         : Chem.MolFromSmarts("C1OC1"),
     "azide"           : Chem.MolFromSmarts("N=[N+]=[N-]"),
     "diazo"           : Chem.MolFromSmarts("N=N"),
-    "guanidine"       : Chem.MolFromSmarts("N-C(N)=N"),
+    "guanidine"       : Chem.MolFromSmarts("NC(=N)N"),
     "barbiturate"     : Chem.MolFromSmarts("O=C1NC(=O)NC(=O)1"),
-
-    # --- Generic environment flags ---
-    "sp3_C"           : Chem.MolFromSmarts("[CX4]"),
-    "sp2_C"           : Chem.MolFromSmarts("[CX3]"),
-    "heteroatom"      : Chem.MolFromSmarts("[!#6;!#1]"),   # any non C,H atom
-    "heterocycle"     : Chem.MolFromSmarts("[a;!c]"),
 
 }
 
