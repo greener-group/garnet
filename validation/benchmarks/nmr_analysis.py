@@ -23,7 +23,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--simulations",
         type=str,
-        default="/cephfs2/jgreener/dms/typing/val_folded/",
+        default="./val_folded",
         help="Path to simulations master folder",
     )
     parser.add_argument(

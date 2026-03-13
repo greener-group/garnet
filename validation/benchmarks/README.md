@@ -20,7 +20,7 @@ The code here has been used to produce the HDF5 benchmark result files (not incl
 - `Datasets/Industry/OpenFF_1.2.json` for small-molecule records.
 - `NMR_Data/J_coupling/...` and `NMR_Data/J_coupling/HBONDS/...` for NMR experimental references.
 - A simulation root for `nmr_analysis.py` with this layout:
-  - `structures/gb3.pdb`, `structures/ubiquitin.pdb`, `structures/bpti.pdb`, `structures/hewl.pdb`
+  - `structures/gb3.pdb`, `structures/ubiquitin.pdb`, `structures/bpti.pdb`, `structures/hewl.pdb`.
   - `dcd/<run_name>/<protein>_<replica>.dcd` (the script checks `dcd/64_7_ep12` first, then `dcd/espaloma`).
 
 ## Environment Setup
@@ -34,7 +34,7 @@ bash install_env.sh
 Notes:
 
 - It is a GPU-oriented conda/pip setup and may need adaptation for your system. Some of the dependencies really do not like to play along together depending on the specific computer architecture.
-- `install_env.sh` currently uses `python Models/Espaloma/setup.py install`; that path to your local espaloma repo!
+- `install_env.sh` currently uses `python Models/Espaloma/setup.py install`, change that path to your local espaloma repo.
 - `src/run_model.py` contains a hardcoded Garnet checkpoint path (`trained_model_fp`); update it to your local model path before running `--backend garnet`.
 
 ## Small-Molecule Workflow
@@ -42,7 +42,7 @@ Notes:
 Run one command per backend:
 
 ```bash
-python main.py --backend <openff / espaloma / mace / garnet>   --out <out file>   --device <cpu / gpu / gpu:device> --n-workers <paraller workers>
+python main.py --backend <openff / espaloma / mace / garnet> --out <out file> --device <cpu / gpu / gpu:device> --n-workers <paraller workers>
 ```
 
 Optional flags:
@@ -54,7 +54,7 @@ The output HDF5 files store coordinates, energies, and geometry metrics (RMSD bo
 
 ## Small-Molecule Postprocessing Workflow
 
-After the four backend HDF5 files are present. Make sure the names of the files generated in tge previous step match:
+After the four backend HDF5 files are present. Make sure the names of the files generated in the previous step match:
 
 ```bash
 python postprocess.py
@@ -108,4 +108,3 @@ This produces:
 - Many scripts use fixed filenames at the top of the file. If you change output names, update those constants.
 - The repo contains generated artifacts from previous runs.
 - Threading/device behavior is managed in `main.py`; adjust `THREADS_PER_SIM` and `--n-workers` to match your CPU/GPU memory budget.
-
