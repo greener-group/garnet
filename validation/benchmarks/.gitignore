@@ -1,7 +1,6 @@
 Models/
 .vscode/
 __pycache__
-install_env.sh
 build
 *pdb
 *png
