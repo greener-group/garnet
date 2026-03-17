@@ -27,6 +27,9 @@ logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore", message="Partial charges have been provided, these will preferentially be used instead of generating new partial charges")
 amber_rdkit = ToolkitRegistry([RDKitToolkitWrapper(), AmberToolsToolkitWrapper()])
 
+# this script was copied from the OpenFE Industry Benchmarking Project Github and modified to be compatible with Garnet
+# refernce: https://doi.org/10.5281/zenodo.17245549
+
 def gen_charges(smc):
     """
     Generate AM1BCC partial charges for a SmallMoleculeComponent using
