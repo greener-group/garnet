@@ -5,7 +5,7 @@
 
 If you use the force field, please cite the paper:
 
-...
+- A Blanco-González, T K Schulze, E Rovers, J G Greener. Training a force field for proteins and small molecules from scratch, [arXiv](https://doi.org/10.48550/arXiv.2603.16770) (2026).
 
 ## Using the force field
 
@@ -107,6 +107,10 @@ The default options for `topology_to_openmm_system` are `nonbondedMethod=NoCutof
 It is important to select these parameters carefully as described in the [the OpenMM documentation](https://docs.openmm.org/latest/userguide/application/02_running_sims.html#simulation-parameters).
 Assigning parameters is usually fast (a few seconds), but for some molecules it can take a minute or so due to graph isomorphism checks.
 If you want to use Garnet with simulation software other than OpenMM, you could try conversion software such as [ParmEd](https://parmed.github.io/ParmEd/html/index.html) or [OpenFF Interchange](https://docs.openforcefield.org/projects/interchange/en/stable).
+
+### Binding free energy calculations
+
+To run relative binding free energy calculations with Garnet using [OpenFE](https://github.com/OpenFreeEnergy/openfe), see the [validation/rbfe](/validation/rbfe/) directory.
 
 ## Training
 

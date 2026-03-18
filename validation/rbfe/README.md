@@ -73,7 +73,7 @@ Garnet force field parameters must be generated for all components of the system
 conda activate garnet_rbfe
 python write_xml_and_pdb.py --pdb input_protein.pdb --ligands ligands.sdf --cofactors cofactors.sdf --output output_dir
 ```
-The cofactors flag is optional. The script should output garnet.xml and protein.pdb. The script works for pdb files that contain protein(s) and crystallographic water molecules. Multiple protein chains can exist in the pdb file. Note that the input pdb file must be compatible with the function topology_from_pdb from OpenFF Pablo. 
+The cofactors flag is optional. The script should output garnet.xml and protein.pdb. The script works for pdb files that contain protein(s) and crystallographic water molecules. Multiple protein chains can exist in the pdb file. Note that the input pdb file must be compatible with the function `topology_from_pdb` from OpenFF Pablo. 
 
 **2. Plan ligand transformation network and simulations with OpenFE tools**
 
@@ -117,9 +117,9 @@ These steps are described in details in OpenFE’s documentation.
 # Caveats
 
 - We have noticed that the setup described above does not work well for transformations that involve ligand net charge changes, as described in our paper [4]. 
-- For the first step outlined above, pdb files are read with the function topology_from_pdb from OpenFF Pablo. This requires input pdb files to follow certain naming rules, and it is possible that your input file needs to be modified slightly, i.e. according to the potential error message, before Garnet parameterisation can be performed.
+- For the first step outlined above, pdb files are read with the function `topology_from_pdb` from OpenFF Pablo. This requires input pdb files to follow certain naming rules, and it is possible that your input file needs to be modified slightly, i.e. according to the potential error message, before Garnet parameterisation can be performed.
 - CONECT records for disulfide bonds must be explicitly defined in the input pdb file. 
-- It’s important that the force field file is called garnet.xml, as this will make the our modified version of OpenFE run with the "correct" functional forms, i.e. the double exponential potential and its soft-core potential, and Garnet parameters.
+- It is important that the force field file is called `garnet.xml`, as this will make our modified version of OpenFE run with the "correct" functional forms, i.e. the double exponential potential and its soft-core potential, and Garnet parameters.
 
 # References
 
@@ -129,4 +129,4 @@ These steps are described in details in OpenFE’s documentation.
 
 3. OpenFE Industry Benchmarking Project GitHub: OpenFE Industry Benchmarking Project Github: https://github.com/OpenFreeEnergy/IndustryBenchmarks2024
 
-4. Garnet paper:
+4. Garnet paper: Blanco-González, Schulze, Rovers, Greener. Training a force field for proteins and small molecules from scratch. arXiv. 2026. DOI: https://doi.org/10.48550/arXiv.2603.16770

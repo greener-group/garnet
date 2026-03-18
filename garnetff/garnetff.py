@@ -380,7 +380,7 @@ class Model(nn.Module):
             date_str = datetime.today().strftime("%Y-%m-%d")
             of.write(f"    <DateGenerated>{date_str}</DateGenerated>\n")
             of.write(f'    <Source Source="Garnet" sourcePackage="Garnet" sourcePackageVersion="{pkg_version}">Generated with Garnet {pkg_version}, see https://github.com/greener-group/garnet</Source>\n')
-            of.write("    <Reference>...</Reference>\n")
+            of.write("    <Reference>A Blanco-González, T K Schulze, E Rovers, J G Greener. Training a force field for proteins and small molecules from scratch. arXiv, 2026. DOI: https://doi.org/10.48550/arXiv.2603.16770</Reference>\n")
             of.write("  </Info>\n")
 
             of.write("  <AtomTypes>\n")
