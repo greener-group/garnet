@@ -14,6 +14,13 @@ Python scripts for running the calculations described below can be found in the 
 - `plan_rbfe_network.py` was copied from the OpenFE Industry Benchmarking Project Github [2,3] and modified to be compatible with Garnet. 
 - Protein, ligand and cofactor structure files in `data/` were copied from the OpenFE Industry Benchmarking Project Github [2,3] and modified to be compatible with Garnet. 
 
+Additionally, we provide Garnet RBFE predictions in `results/` in form of:
+- ΔΔG predictions for edges in the ligand transformation networks (`garnet_calc_edges_ddg.csv`).
+- ΔΔG predictions for all ligand pairs in each ligand transformation series (`garnet_calc_all_pairwise_ddg.csv`).
+- ΔG predictions estimated using ΔΔG results for edges in transformation networks (`garnet_calc_dg.csv`).
+
+RBFE benchmarking plots shown in our paper can be reproduced with the Jupyter notebook in `results/garnet_openfe_fep_plus.ipynb`.
+
 # Installation
 
 See instructions on how to install our `openfe` fork at https://github.com/greener-group/openfe. This installation will create the `openfe` conda environment. 

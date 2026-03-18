@@ -1,0 +1,294 @@
+ligand_i,ligand_j,Garnet DDG(i->j) (kcal/mol),Garnet uncertainty (kcal/mol),system group,system name
+ejm_31,ejm_42,-0.07,0.08,jacs_set,tyk2
+ejm_31,ejm_44,2.2,0.2,jacs_set,tyk2
+ejm_31,ejm_45,-0.6,0.2,jacs_set,tyk2
+ejm_31,ejm_46,-1.48,0.04,jacs_set,tyk2
+ejm_31,ejm_48,1.1,0.2,jacs_set,tyk2
+ejm_42,ejm_54,-1.0,1.0,jacs_set,tyk2
+ejm_43,ejm_42,-1.1,0.1,jacs_set,tyk2
+ejm_44,ejm_43,-1.5,0.4,jacs_set,tyk2
+ejm_47,ejm_31,0.5,0.2,jacs_set,tyk2
+ejm_47,ejm_50,0.7,0.2,jacs_set,tyk2
+ejm_49,ejm_31,0.6,0.5,jacs_set,tyk2
+ejm_49,ejm_50,1.1,0.7,jacs_set,tyk2
+ejm_50,ejm_42,0.09,0.1,jacs_set,tyk2
+ejm_50,ejm_48,0.4,0.2,jacs_set,tyk2
+ejm_50,ejm_55,0.2,1.0,jacs_set,tyk2
+ejm_55,ejm_54,-1.9,0.7,jacs_set,tyk2
+jmc_23,ejm_31,2.6,0.06,jacs_set,tyk2
+jmc_23,jmc_27,0.1,0.2,jacs_set,tyk2
+jmc_23,jmc_28,0.8,0.1,jacs_set,tyk2
+jmc_27,ejm_46,1.02,0.09,jacs_set,tyk2
+jmc_28,jmc_30,-0.35,0.1,jacs_set,tyk2
+jmc_30,ejm_46,0.5,0.2,jacs_set,tyk2
+17,1h1q,0.7,0.2,jacs_set,cdk2
+17,1h1r,-0.16,0.08,jacs_set,cdk2
+17,1oiu,-0.6,0.2,jacs_set,cdk2
+1h1r,1h1q,0.9,0.3,jacs_set,cdk2
+1h1s,31,3.8,0.6,jacs_set,cdk2
+1h1s,32,3.0,0.4,jacs_set,cdk2
+1oiu,1h1q,1.5,0.3,jacs_set,cdk2
+1oiy,1h1q,1.7,0.4,jacs_set,cdk2
+1oiy,1oi9,-1.1,0.4,jacs_set,cdk2
+20,1h1q,-0.5,0.2,jacs_set,cdk2
+21,1h1q,-1.0,0.4,jacs_set,cdk2
+21,20,-1.3,0.6,jacs_set,cdk2
+22,1h1q,-0.4,0.5,jacs_set,cdk2
+22,1oi9,-2.3,0.5,jacs_set,cdk2
+26,1h1q,0.2,0.3,jacs_set,cdk2
+26,1oi9,-2.29,0.08,jacs_set,cdk2
+28,1h1s,0.1,0.5,jacs_set,cdk2
+28,32,3.0,0.8,jacs_set,cdk2
+30,1h1s,-1.7,0.1,jacs_set,cdk2
+30,29,-1.2,0.9,jacs_set,cdk2
+30,31,1.8,0.2,jacs_set,cdk2
+31,1h1q,1.1,0.1,jacs_set,cdk2
+31,1oi9,-1.77,0.03,jacs_set,cdk2
+31,29,-1.5,0.2,jacs_set,cdk2
+2aa,3flq,-2.0,2.0,jacs_set,p38
+2aa,3flw,-1.0,1.0,jacs_set,p38
+2aa,3fly,-1.0,1.0,jacs_set,p38
+2bb,2v,1.8,0.4,jacs_set,p38
+2c,3flz,-1.0,0.4,jacs_set,p38
+2ee,3fln,0.5,0.5,jacs_set,p38
+2f,2e,0.5,0.3,jacs_set,p38
+2f,3flz,-0.1,0.9,jacs_set,p38
+2ff,3fln,-0.6,0.4,jacs_set,p38
+2g,2c,2.1,0.9,jacs_set,p38
+2g,2h,1.7,0.3,jacs_set,p38
+2g,2i,2.2,0.2,jacs_set,p38
+2g,3fln,-0.2,0.5,jacs_set,p38
+2g,3flz,0.6,0.2,jacs_set,p38
+2gg,3fln,-0.8,0.5,jacs_set,p38
+2h,2i,0.6,0.3,jacs_set,p38
+2j,2ee,-3.4,0.6,jacs_set,p38
+2j,2ff,-1.5,0.9,jacs_set,p38
+2j,2gg,-1.9,0.4,jacs_set,p38
+2j,2k,-1.9,0.2,jacs_set,p38
+2j,2l,-4.5,0.4,jacs_set,p38
+2j,2p,-2.8,0.8,jacs_set,p38
+2j,2t,-3.5,0.1,jacs_set,p38
+2j,2v,-0.4,0.6,jacs_set,p38
+2k,2m,-1.7,0.2,jacs_set,p38
+2k,3fln,-0.38,0.04,jacs_set,p38
+2l,3fln,1.53,0.07,jacs_set,p38
+2n,2r,1.1,0.2,jacs_set,p38
+2n,2s,-0.0,0.7,jacs_set,p38
+2n,3fln,1.3,0.2,jacs_set,p38
+2o,2n,-0.8,0.9,jacs_set,p38
+2o,3fln,2.4,0.4,jacs_set,p38
+2p,3fln,1.2,0.6,jacs_set,p38
+2q,2ee,0.9,0.8,jacs_set,p38
+2q,2k,2.9,0.5,jacs_set,p38
+2s,2r,1.1,0.8,jacs_set,p38
+2t,3fln,1.0,0.2,jacs_set,p38
+2u,2k,7.0,1.0,jacs_set,p38
+2u,3fln,5.0,1.0,jacs_set,p38
+2v,2z,-0.0,1.0,jacs_set,p38
+2v,3fly,-1.0,1.0,jacs_set,p38
+2x,2v,0.36,0.09,jacs_set,p38
+2x,3fly,-0.57,0.08,jacs_set,p38
+2y,2v,1.2,0.8,jacs_set,p38
+2z,3fly,-0.4,0.5,jacs_set,p38
+3fln,2e,0.5,0.2,jacs_set,p38
+3fln,2v,1.0,0.3,jacs_set,p38
+3flq,2v,4.9,0.9,jacs_set,p38
+3flw,3fly,0.2,0.6,jacs_set,p38
+3fmh,2v,3.3,0.8,jacs_set,p38
+3fmh,3fly,0.3,0.9,jacs_set,p38
+3fmk,2v,5.8,0.7,jacs_set,p38
+3fmk,3fly,3.4,0.5,jacs_set,p38
+23,42,-0.1,0.2,jacs_set,mcl1
+23,66,-0.33,0.05,jacs_set,mcl1
+26,27,0.0,0.9,jacs_set,mcl1
+26,44,-2.0,0.1,jacs_set,mcl1
+26,57,-0.5,0.09,jacs_set,mcl1
+26,68,0.6,0.2,jacs_set,mcl1
+27,28,-0.1,0.2,jacs_set,mcl1
+27,30-flip,0.3,0.7,jacs_set,mcl1
+27,31,-1.6,0.6,jacs_set,mcl1
+27,38-flip,-1.0,2.0,jacs_set,mcl1
+27,39,-2.0,2.0,jacs_set,mcl1
+27,40-flip,-1.0,2.0,jacs_set,mcl1
+27,42,-1.1,0.9,jacs_set,mcl1
+27,43-flip,-1.0,1.0,jacs_set,mcl1
+27,45,3.8,0.8,jacs_set,mcl1
+27,46-flip,-0.3,0.8,jacs_set,mcl1
+27,47-flip,-2.0,2.0,jacs_set,mcl1
+27,48-flip,0.0,0.3,jacs_set,mcl1
+28,29,-1.1,0.3,jacs_set,mcl1
+28,38-flip,0.0,1.0,jacs_set,mcl1
+28,39,-0.2,0.9,jacs_set,mcl1
+28,46-flip,-1.0,1.0,jacs_set,mcl1
+30-flip,37,-0.4,0.2,jacs_set,mcl1
+30-flip,40-flip,0.3,0.5,jacs_set,mcl1
+31,35,0.5,0.4,jacs_set,mcl1
+32,33,-0.4,0.2,jacs_set,mcl1
+32,34,-0.7,0.4,jacs_set,mcl1
+32,41-flip,-0.3,1.0,jacs_set,mcl1
+33,34,0.4,0.3,jacs_set,mcl1
+33,35,-0.2,0.2,jacs_set,mcl1
+33,41-flip,0.7,0.7,jacs_set,mcl1
+33,45,3.0,2.0,jacs_set,mcl1
+33,48-flip,1.0,1.0,jacs_set,mcl1
+35,36,-0.0,0.2,jacs_set,mcl1
+35,37,-0.9,0.6,jacs_set,mcl1
+35,49,0.2,0.7,jacs_set,mcl1
+36,52,-1.0,0.2,jacs_set,mcl1
+37,53,-1.2,0.1,jacs_set,mcl1
+37,56,0.1,0.1,jacs_set,mcl1
+37,60,0.2,0.05,jacs_set,mcl1
+42,44,-1.6,0.3,jacs_set,mcl1
+42,51,0.6,0.3,jacs_set,mcl1
+42,54,-0.8,0.4,jacs_set,mcl1
+42,57,0.07,0.06,jacs_set,mcl1
+42,62,0.6,0.4,jacs_set,mcl1
+42,64,-0.1,0.5,jacs_set,mcl1
+42,66,0.1,0.5,jacs_set,mcl1
+42,68,1.4,0.3,jacs_set,mcl1
+43-flip,47-flip,-0.3,0.1,jacs_set,mcl1
+49,50,0.7,0.5,jacs_set,mcl1
+50,61,0.2,0.2,jacs_set,mcl1
+51,62,-0.2,0.2,jacs_set,mcl1
+52,53,-0.6,0.3,jacs_set,mcl1
+53,58,-0.1,0.2,jacs_set,mcl1
+53,63,0.4,0.1,jacs_set,mcl1
+54,64,0.4,0.2,jacs_set,mcl1
+56,58,-0.8,0.2,jacs_set,mcl1
+60,61,0.0,1.0,jacs_set,mcl1
+60,63,-0.76,0.04,jacs_set,mcl1
+60,65,-0.6,0.3,jacs_set,mcl1
+60,67,0.8,0.1,jacs_set,mcl1
+65,67,0.8,0.2,jacs_set,mcl1
+12 docked,11 docked,-1.4,0.2,water_set,chk1
+13 docked,11 docked,-0.4,0.8,water_set,chk1
+13 docked,12 docked,1.0,0.7,water_set,chk1
+14 docked,11 docked,0.9,0.8,water_set,chk1
+14 docked,16 docked,-1.1,0.2,water_set,chk1
+14 docked,20,0.6,0.3,water_set,chk1
+16 docked,11 docked,1.0,1.0,water_set,chk1
+16 docked,17 torsion adjust,-0.7,0.5,water_set,chk1
+18 docked,15 docked,-0.5,0.7,water_set,chk1
+18 docked,16 docked,-0.5,0.1,water_set,chk1
+18 docked,17 torsion adjust,-1.8,0.3,water_set,chk1
+18 docked,19,0.1,0.3,water_set,chk1
+18 docked,20,0.8,0.3,water_set,chk1
+19,15 docked,-0.8,0.6,water_set,chk1
+21 (Xtal),11 docked,1.7,0.5,water_set,chk1
+21 (Xtal),22,0.06,0.07,water_set,chk1
+22,11 docked,1.0,1.0,water_set,chk1
+24 pose 2,20,0.0,2.0,water_set,chk1
+butyl benzene,isobutyl benzene,1.4,0.3,fragments,t4_lysozyme
+butyl benzene,propyl benzene,0.2,0.1,fragments,t4_lysozyme
+ethyl benzene,ortho methyl ethyl benzene,0.2,0.2,fragments,t4_lysozyme
+ethyl benzene,propyl benzene,-0.6,0.2,fragments,t4_lysozyme
+meta methyl ethyl benzene,ethyl benzene,0.0,1.0,fragments,t4_lysozyme
+meta methyl ethyl benzene,m-xylene,0.9,0.4,fragments,t4_lysozyme
+methyl benzene,benzene,0.2,0.6,fragments,t4_lysozyme
+methyl benzene,m-xylene,-1.0,0.5,fragments,t4_lysozyme
+methyl benzene,p-xylene,0.5,0.4,fragments,t4_lysozyme
+o-xylene,benzene,-0.4,0.7,fragments,t4_lysozyme
+ortho methyl ethyl benzene,o-xylene,0.6,0.2,fragments,t4_lysozyme
+p-xylene,para methyl ethyl benzene,-1.07,0.08,fragments,t4_lysozyme
+propyl benzene,isobutyl benzene,0.27,0.08,fragments,t4_lysozyme
+propyl benzene,para methyl ethyl benzene,-0.3,0.6,fragments,t4_lysozyme
+17a,17b,-0.7,0.2,miscellaneous_set,galectin
+17a,17d,-1.1,0.2,miscellaneous_set,galectin
+17b,17d,-0.3,0.1,miscellaneous_set,galectin
+17c,17i,0.7,0.06,miscellaneous_set,galectin
+17e,17d,1.16,0.02,miscellaneous_set,galectin
+17e,17g,0.14,0.03,miscellaneous_set,galectin
+17e,17k,0.7,0.2,miscellaneous_set,galectin
+17f,17c,0.17,0.03,miscellaneous_set,galectin
+17f,17g,0.1,0.1,miscellaneous_set,galectin
+17h flip,17d,0.47,0.04,miscellaneous_set,galectin
+17j,17h flip,-1.0,0.4,miscellaneous_set,galectin
+17j,17k,-1.2,0.3,miscellaneous_set,galectin
+17j,17l,0.2,0.1,miscellaneous_set,galectin
+17k,17i,0.15,0.08,miscellaneous_set,galectin
+17l,17d,-1.3,0.2,miscellaneous_set,galectin
+17m,17a,0.0,0.6,miscellaneous_set,galectin
+17m,17n,-1.1,0.5,miscellaneous_set,galectin
+17m,17p,-2.9,0.3,miscellaneous_set,galectin
+17n,17a,1.3,0.4,miscellaneous_set,galectin
+17n,17o,-0.3,0.1,miscellaneous_set,galectin
+17n,17p,-1.4,0.1,miscellaneous_set,galectin
+17q,17o,0.4,1.0,miscellaneous_set,galectin
+17q,17r,1.1,0.3,miscellaneous_set,galectin
+17r,17p,-2.1,0.5,miscellaneous_set,galectin
+18a,18d,-0.4,0.2,miscellaneous_set,galectin
+18a,18e,-0.4,0.3,miscellaneous_set,galectin
+18b,17g,0.5,0.05,miscellaneous_set,galectin
+18b,18d,0.7,0.1,miscellaneous_set,galectin
+18d,17g,-0.3,0.2,miscellaneous_set,galectin
+18d,18g,-0.0,0.2,miscellaneous_set,galectin
+18e,18f,0.16,0.05,miscellaneous_set,galectin
+18e,18h,0.5,0.4,miscellaneous_set,galectin
+18f,18g,0.19,0.08,miscellaneous_set,galectin
+18g,18h,0.5,0.2,miscellaneous_set,galectin
+18i,17c,-2.0,1.0,miscellaneous_set,galectin
+18i,17f,-0.9,0.2,miscellaneous_set,galectin
+17a,17b,-0.0,2.0,janssen_bace,bace_p3_arg368_in
+17a,17c,-0.2,0.4,janssen_bace,bace_p3_arg368_in
+17b,17c,-0.5,0.2,janssen_bace,bace_p3_arg368_in
+17b,17d,-0.6,0.5,janssen_bace,bace_p3_arg368_in
+17c,17d,-0.0,0.7,janssen_bace,bace_p3_arg368_in
+17d,17e,-0.6,0.1,janssen_bace,bace_p3_arg368_in
+17d,17g,-0.8,0.6,janssen_bace,bace_p3_arg368_in
+17e,17f,0.7,0.1,janssen_bace,bace_p3_arg368_in
+27a,27b,0.9,0.7,janssen_bace,bace_p3_arg368_in
+27a,27d,1.0,1.0,janssen_bace,bace_p3_arg368_in
+27b,27c,1.0,3.0,janssen_bace,bace_p3_arg368_in
+27b,27d,0.1,0.8,janssen_bace,bace_p3_arg368_in
+27b,27g,-2.9,0.4,janssen_bace,bace_p3_arg368_in
+27c,27e,-1.8,0.6,janssen_bace,bace_p3_arg368_in
+27d,27e,2.0,1.0,janssen_bace,bace_p3_arg368_in
+27d,27f,0.1,0.4,janssen_bace,bace_p3_arg368_in
+8a,17a,-2.2,0.6,janssen_bace,bace_p3_arg368_in
+8a,27a,-2.0,2.0,janssen_bace,bace_p3_arg368_in
+8a,8b,0.4,0.3,janssen_bace,bace_p3_arg368_in
+8a,8c,0.4,0.2,janssen_bace,bace_p3_arg368_in
+8b,17b,-2.0,1.0,janssen_bace,bace_p3_arg368_in
+8b,27b,-0.0,2.0,janssen_bace,bace_p3_arg368_in
+8b,8c,-0.5,0.2,janssen_bace,bace_p3_arg368_in
+8b,8d,-1.1,0.2,janssen_bace,bace_p3_arg368_in
+8c,8d,-0.9,0.6,janssen_bace,bace_p3_arg368_in
+8d,8e,-0.6,0.8,janssen_bace,bace_p3_arg368_in
+8d,8g,-0.7,0.6,janssen_bace,bace_p3_arg368_in
+8e,8f,0.6,0.4,janssen_bace,bace_p3_arg368_in
+CHEMBL3402741_400,CHEMBL3402763_90,0.0,0.4,cmet,cmet
+CHEMBL3402741_400,CHEMBL3402764_90,-4.0,4.0,cmet,cmet
+CHEMBL3402742_23,CHEMBL3402741_400,1.0,1.0,cmet,cmet
+CHEMBL3402742_23,CHEMBL3402763_90,1.0,2.0,cmet,cmet
+CHEMBL3402742_23,CHEMBL3402764_90,-1.0,0.5,cmet,cmet
+CHEMBL3402743_42,CHEMBL3402742_23,1.7,0.6,cmet,cmet
+CHEMBL3402743_42,CHEMBL3402764_90,0.65,0.09,cmet,cmet
+CHEMBL3402743_42,CHEMBL3402765_11-charged-pKa-8.1,-0.7,0.6,cmet,cmet
+CHEMBL3402744_300,CHEMBL3402745_200,-0.8,0.2,cmet,cmet
+CHEMBL3402744_300,CHEMBL3402752_30000,3.1,0.1,cmet,cmet
+CHEMBL3402744_300,CHEMBL3402755_4200,-0.2,0.3,cmet,cmet
+CHEMBL3402744_300,CHEMBL3402761_1_redocked,-5.0,2.0,cmet,cmet
+CHEMBL3402745_200,CHEMBL3402743_42,9.3,0.4,cmet,cmet
+CHEMBL3402745_200,CHEMBL3402754_40,-1.3,0.3,cmet,cmet
+CHEMBL3402747_3400,CHEMBL3402744_300,-3.1,0.6,cmet,cmet
+CHEMBL3402747_3400,CHEMBL3402749_500,-3.5,0.3,cmet,cmet
+CHEMBL3402747_3400,CHEMBL3402751_2100,-1.3,0.4,cmet,cmet
+CHEMBL3402747_3400,CHEMBL3402752_30000,-0.1,0.4,cmet,cmet
+CHEMBL3402748_5300,CHEMBL3402751_2100,2.9,0.2,cmet,cmet
+CHEMBL3402749_500,CHEMBL3402748_5300,-1.35,0.05,cmet,cmet
+CHEMBL3402750_400,CHEMBL3402748_5300,-0.47,0.09,cmet,cmet
+CHEMBL3402752_30000,CHEMBL3402749_500,-3.4,0.5,cmet,cmet
+CHEMBL3402753_200,CHEMBL3402754_40,-0.7,0.1,cmet,cmet
+CHEMBL3402755_4200,CHEMBL3402754_40,-3.2,1.0,cmet,cmet
+CHEMBL3402755_4200,CHEMBL3402761_1_redocked,-4.0,2.0,cmet,cmet
+CHEMBL3402756_2.7_redocked,CHEMBL3402757_6.5_redocked,0.25,0.08,cmet,cmet
+CHEMBL3402756_2.7_redocked,CHEMBL3402759_5.7_redocked,0.6,0.3,cmet,cmet
+CHEMBL3402757_6.5_redocked,CHEMBL3402758_10_redocked,-0.3,0.2,cmet,cmet
+CHEMBL3402757_6.5_redocked,CHEMBL3402759_5.7_redocked,0.3,0.1,cmet,cmet
+CHEMBL3402760_1_redocked,CHEMBL3402757_6.5_redocked,1.5,0.2,cmet,cmet
+CHEMBL3402760_1_redocked,CHEMBL3402758_10_redocked,1.2,0.4,cmet,cmet
+CHEMBL3402762_1_redocked,CHEMBL3402758_10_redocked,1.0,1.0,cmet,cmet
+CHEMBL3402762_1_redocked,CHEMBL3402760_1_redocked,0.4,0.9,cmet,cmet
+CHEMBL3402764_90,CHEMBL3402756_2.7_redocked,-1.0,2.0,cmet,cmet
+CHEMBL3402764_90,CHEMBL3402758_10_redocked,-1.0,2.0,cmet,cmet
+CHEMBL3402765_11-charged-pKa-8.1,CHEMBL3402764_90,1.0,1.0,cmet,cmet
