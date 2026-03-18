@@ -1,4 +1,6 @@
-# Background
+# Relative binding free energy prediction with Garnet
+
+## Background
 
 This repository contains scripts and data used to evaluate Garnet for relative binding free energy (RBFE) estimation with alchemical free energy calculations. 
 
@@ -8,20 +10,20 @@ OpenFE’s RFBE protocol can be run with our Garnet force field by following the
 
 We refer to the OpenFE documentation [1] and Industry Benchmarking Project paper and GitHub for details on OpenFE [2,3] and to our paper [4] for further description and benchmarking results of Garnet. 
 
-# Directory content
+## Directory content
 
 Python scripts for running the calculations described below can be found in the `scripts/` directory, and input data used for our benchmarking can be found in the `data/` directory. We note that:
 - `plan_rbfe_network.py` was copied from the OpenFE Industry Benchmarking Project Github [2,3] and modified to be compatible with Garnet. 
 - Protein, ligand and cofactor structure files in `data/` were copied from the OpenFE Industry Benchmarking Project Github [2,3] and modified to be compatible with Garnet. 
 
-Additionally, we provide Garnet RBFE predictions in `results/` in form of:
+Additionally, we provide Garnet RBFE predictions in `results/` in the form of:
 - ΔΔG predictions for edges in the ligand transformation networks (`garnet_calc_edges_ddg.csv`).
 - ΔΔG predictions for all ligand pairs in each ligand transformation series (`garnet_calc_all_pairwise_ddg.csv`).
 - ΔG predictions estimated using ΔΔG results for edges in transformation networks (`garnet_calc_dg.csv`).
 
 RBFE benchmarking plots shown in our paper can be reproduced with the Jupyter notebook in `results/garnet_openfe_fep_plus.ipynb`.
 
-# Installation
+## Installation
 
 See instructions on how to install our `openfe` fork at https://github.com/greener-group/openfe. This installation will create the `openfe` conda environment. 
 
@@ -36,7 +38,7 @@ pip install garnetff
 conda install -c conda-forge click
 ```
 
-# Instructions (short)
+## Instructions (short)
 
 To apply the Garnet force field within the OpenFE framework, the following steps are required:
 
@@ -68,7 +70,7 @@ The transformation.json file will be in the output directory specified in the pr
 
 These steps are described in detail in OpenFE’s documentation.
 
-# Instructions (detailed)
+## Instructions (detailed)
 
 **1. Prepare structure and Garnet force field parameter files**
 
@@ -121,14 +123,14 @@ openfe gather results/ --report dg -o results_dg.tsv
 
 These steps are described in details in OpenFE’s documentation.
 
-# Caveats
+## Caveats
 
 - We have noticed that the setup described above does not work well for transformations that involve ligand net charge changes, as described in our paper [4]. 
 - For the first step outlined above, pdb files are read with the function `topology_from_pdb` from OpenFF Pablo. This requires input pdb files to follow certain naming rules, and it is possible that your input file needs to be modified slightly, i.e. according to the potential error message, before Garnet parameterisation can be performed.
 - CONECT records for disulfide bonds must be explicitly defined in the input pdb file. 
 - It is important that the force field file is called `garnet.xml`, as this will make our modified version of OpenFE run with the "correct" functional forms, i.e. the double exponential potential and its soft-core potential, and Garnet parameters.
 
-# References
+## References
 
 1. OpenFE documentation: https://docs.openfree.energy/en/latest/
 
