@@ -20,7 +20,7 @@ from ase.optimize import BFGS
 
 from openmm import Platform, VerletIntegrator, LocalEnergyMinimizer, NonbondedForce
 from openmm.app import Simulation
-from openmm.unit import picosecond, kilojoules_per_mole, nanometer
+from openmm.unit import picosecond, kilojoules_per_mole, nanometer, elementary_charge
 from openff.toolkit.topology import Molecule, Topology
 from openff.toolkit.typing.engines.smirnoff import ForceField
 from openff.qcsubmit.results import OptimizationResultCollection
@@ -85,6 +85,47 @@ def rmsd_periodic(phi0, phi1):
     d = phi1 - phi0
     d = (d + np.pi) % (2 * np.pi) - np.pi  # wrap to (-π, π]
     return np.sqrt(np.mean(d ** 2))
+
+def center_coords(coords, masses):
+    return coords - np.sum(masses[:, None] * coords, axis=0) / masses.sum()
+
+def inertia_tensor(coords, masses):
+    normsq = np.sum(coords * coords, axis=1)
+    return sum(m * (r2 * np.eye(3) - np.outer(r, r)) for m, r2, r in zip(masses, normsq, coords))
+
+def principal_axes(coords, masses):
+    moments, axes = np.linalg.eigh(inertia_tensor(coords, masses))
+    if np.linalg.det(axes) < 0:
+        axes[:, 2] *= -1
+    return moments, axes
+
+def dipole_info(charges, coords, masses):
+    if charges is None:
+        return {
+            "dipole": np.full(3, np.nan, dtype=np.float32),
+            "tensor": np.full((3, 3), np.nan, dtype=np.float32),
+            "inertia_moments": np.full(3, np.nan, dtype=np.float32),
+        }
+
+    centered = center_coords(coords, masses)
+    moments, axes = principal_axes(centered, masses)
+    dipole_lab = np.sum(charges[:, None] * centered, axis=0)
+    dipole = dipole_lab @ axes
+
+    return {
+        "dipole": dipole.astype(np.float32),
+        "tensor": np.outer(dipole, dipole).astype(np.float32),
+        "inertia_moments": moments.astype(np.float32),
+    }
+
+def partial_charges_from_system(system):
+    for force in system.getForces():
+        if isinstance(force, NonbondedForce):
+            return np.array([
+                force.getParticleParameters(i)[0].value_in_unit(elementary_charge)
+                for i in range(system.getNumParticles())
+            ])
+    return None
 
 # -----------------------------------------------------------------------------
 # Lazy singletons: QCArchive client + dataset
@@ -166,6 +207,7 @@ def process_single_molecule(rec_id: int):
 
     name   = final_molecule.dict()["name"]
     mol    = Molecule.from_qcschema(final_molecule, allow_undefined_stereo = True)
+    masses = np.asarray(final_molecule.masses, dtype=float)
     qm_energy = entry.dict()["energies"][-1] * 2625.4996394799 # High-precision Hartree to kJ/mol
 
     # =========================================================================
@@ -188,10 +230,12 @@ def process_single_molecule(rec_id: int):
     smiles    = mol.to_smiles(mapped=True)
 
     ic0 = compute_internal_coordinates(mol, coords_qm)
+    partial_charges = None
 
     if backend in ["espaloma", "openff", "garnet"]:
         if backend == "espaloma":
             system, mgraph = build_system_espaloma(mol, top)
+            partial_charges = partial_charges_from_system(system)
             
         elif backend == "openff":
             # Assign charges using the production NAGL model directly.
@@ -199,6 +243,7 @@ def process_single_molecule(rec_id: int):
             mol.assign_partial_charges(
                 partial_charge_method="openff-gnn-am1bcc-1.0.0.pt"
             )
+            partial_charges = mol.partial_charges.m_as("elementary_charge")
             
             # Generate the OpenMM system and FORCE it to use the pre-calculated charges
             system = _ff.create_openmm_system(
@@ -209,6 +254,7 @@ def process_single_molecule(rec_id: int):
             
         elif backend == "garnet":
             system, top = garnet.topology_to_openmm_system(top)
+            partial_charges = partial_charges_from_system(system)
             mgraph = None
         
         for force in system.getForces():
@@ -266,6 +312,15 @@ def process_single_molecule(rec_id: int):
     rmsd_propers   = rmsd_periodic(ic1["propers"],   ic0["propers"])
     rmsd_impropers = rmsd_periodic(ic1["impropers"], ic0["impropers"])
     tfd            = compute_tfd_from_coords(mol, coords_qm, coords_min)
+    dipoles = {
+        "qm": dipole_info(partial_charges, coords_qm, masses),
+        "min": dipole_info(partial_charges, coords_min, masses),
+        "total_charge": np.nan if partial_charges is None else float(np.sum(partial_charges)),
+        "partial_charges": (
+            np.full(coords_qm.shape[0], np.nan, dtype=np.float32)
+            if partial_charges is None else np.asarray(partial_charges, dtype=np.float32)
+        ),
+    }
 
     del ic0, ic1
     gc.collect()
@@ -284,6 +339,7 @@ def process_single_molecule(rec_id: int):
         "energy_initial": energy,
         "energy_min": energy_min,
         "tfd":tfd,
+        "dipoles": dipoles,
     }
 
 # -----------------------------------------------------------------------------

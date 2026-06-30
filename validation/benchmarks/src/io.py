@@ -137,6 +137,7 @@ class BenchmarkResults:
 
         self._coords_qm_chunks  = []
         self._coords_min_chunks = []
+        self._partial_charge_chunks = []
 
         self.rmsd_cart      = []
         self.rmsd_bonds     = []
@@ -148,6 +149,14 @@ class BenchmarkResults:
         self.energy_qm      = []
         self.energy_initial = []
         self.energy_min     = []
+
+        self.dipole_qm = []
+        self.dipole_min = []
+        self.dipole_tensor_qm = []
+        self.dipole_tensor_min = []
+        self.inertia_moments_qm = []
+        self.inertia_moments_min = []
+        self.total_charge = []
 
     def add(self, record: dict):
         """
@@ -168,6 +177,9 @@ class BenchmarkResults:
 
         self._coords_qm_chunks.append(coords_qm.astype(np.float32, copy=False))
         self._coords_min_chunks.append(coords_min.astype(np.float32, copy=False))
+        self._partial_charge_chunks.append(
+            record["dipoles"]["partial_charges"].astype(np.float32, copy=False)
+        )
 
         self.rmsd_cart.append(float(record["rmsd_cart"]))
         self.rmsd_bonds.append(float(record["rmsd_bonds"]))
@@ -180,6 +192,15 @@ class BenchmarkResults:
         self.energy_initial.append(float(record["energy_initial"]))
         self.energy_min.append(float(record["energy_min"]))
 
+        dipoles = record["dipoles"]
+        self.dipole_qm.append(dipoles["qm"]["dipole"])
+        self.dipole_min.append(dipoles["min"]["dipole"])
+        self.dipole_tensor_qm.append(dipoles["qm"]["tensor"])
+        self.dipole_tensor_min.append(dipoles["min"]["tensor"])
+        self.inertia_moments_qm.append(dipoles["qm"]["inertia_moments"])
+        self.inertia_moments_min.append(dipoles["min"]["inertia_moments"])
+        self.total_charge.append(float(dipoles["total_charge"]))
+
     def _finalize_coords(self):
         """
         Build concatenated coordinate arrays and offsets.
@@ -187,6 +208,7 @@ class BenchmarkResults:
         if not self._coords_qm_chunks:
             self.coords_qm  = np.zeros((0, 3), dtype=np.float32)
             self.coords_min = np.zeros((0, 3), dtype=np.float32)
+            self.partial_charges = np.zeros(0, dtype=np.float32)
             self.offsets    = np.zeros(1, dtype=np.int64)
             self.n_atoms    = np.zeros(0, dtype=np.int64)
             return
@@ -194,6 +216,7 @@ class BenchmarkResults:
         self.n_atoms = np.asarray(self.n_atoms, dtype=np.int64)
         self.coords_qm  = np.vstack(self._coords_qm_chunks)
         self.coords_min = np.vstack(self._coords_min_chunks)
+        self.partial_charges = np.concatenate(self._partial_charge_chunks)
 
         self.offsets = np.zeros(len(self.n_atoms) + 1, dtype=np.int64)
         self.offsets[1:] = np.cumsum(self.n_atoms)
@@ -218,10 +241,22 @@ class BenchmarkResults:
         energy_initial = np.asarray(self.energy_initial, dtype=np.float32)
         energy_min     = np.asarray(self.energy_min,     dtype=np.float32)
 
+        dipole_qm = np.asarray(self.dipole_qm, dtype=np.float32)
+        dipole_min = np.asarray(self.dipole_min, dtype=np.float32)
+        dipole_tensor_qm = np.asarray(self.dipole_tensor_qm, dtype=np.float32)
+        dipole_tensor_min = np.asarray(self.dipole_tensor_min, dtype=np.float32)
+        inertia_moments_qm = np.asarray(self.inertia_moments_qm, dtype=np.float32)
+        inertia_moments_min = np.asarray(self.inertia_moments_min, dtype=np.float32)
+        total_charge = np.asarray(self.total_charge, dtype=np.float32)
+
         with h5py.File(filename, "w") as f:
             meta = f.create_group("meta")
             meta.attrs["backend"]      = self.backend
             meta.attrs["dataset_name"] = self.dataset_name
+            meta.attrs["dipole_units"] = "elementary_charge * angstrom"
+            meta.attrs["dipole_origin"] = "center_of_mass"
+            meta.attrs["dipole_frame"] = "right-handed principal_inertia_axes"
+            meta.attrs["dipole_tensor"] = "outer(dipole, dipole)"
 
             f.create_dataset("names",  data=names)
             f.create_dataset("smiles", data=smiles)
@@ -232,6 +267,8 @@ class BenchmarkResults:
             f.create_dataset("coords_qm",  data=self.coords_qm,
                              compression=compression)
             f.create_dataset("coords_min", data=self.coords_min,
+                             compression=compression)
+            f.create_dataset("partial_charges", data=self.partial_charges,
                              compression=compression)
 
             f.create_dataset("rmsd_cart",      data=rmsd_cart)
@@ -244,6 +281,14 @@ class BenchmarkResults:
             f.create_dataset("energy_qm",      data=energy_qm)
             f.create_dataset("energy_initial", data=energy_initial)
             f.create_dataset("energy_min",     data=energy_min)
+
+            f.create_dataset("dipole_qm", data=dipole_qm)
+            f.create_dataset("dipole_min", data=dipole_min)
+            f.create_dataset("dipole_tensor_qm", data=dipole_tensor_qm)
+            f.create_dataset("dipole_tensor_min", data=dipole_tensor_min)
+            f.create_dataset("inertia_moments_qm", data=inertia_moments_qm)
+            f.create_dataset("inertia_moments_min", data=inertia_moments_min)
+            f.create_dataset("total_charge", data=total_charge)
 
     @classmethod
     def from_hdf5(cls, filename: str) -> "BenchmarkResults":
@@ -264,6 +309,10 @@ class BenchmarkResults:
 
             obj.coords_qm  = f["coords_qm"][()]
             obj.coords_min = f["coords_min"][()]
+            obj.partial_charges = (
+                f["partial_charges"][()] if "partial_charges" in f else
+                np.full(obj.offsets[-1], np.nan, dtype=np.float32)
+            )
 
             obj.rmsd_cart      = f["rmsd_cart"][()].tolist()
             obj.rmsd_bonds     = f["rmsd_bonds"][()].tolist()
@@ -275,6 +324,36 @@ class BenchmarkResults:
             obj.energy_qm      = f["energy_qm"][()].tolist()
             obj.energy_initial = f["energy_initial"][()].tolist()
             obj.energy_min     = f["energy_min"][()].tolist()
+
+            n = len(obj.n_atoms)
+            obj.dipole_qm = (
+                f["dipole_qm"][()].tolist() if "dipole_qm" in f else
+                np.full((n, 3), np.nan, dtype=np.float32).tolist()
+            )
+            obj.dipole_min = (
+                f["dipole_min"][()].tolist() if "dipole_min" in f else
+                np.full((n, 3), np.nan, dtype=np.float32).tolist()
+            )
+            obj.dipole_tensor_qm = (
+                f["dipole_tensor_qm"][()].tolist() if "dipole_tensor_qm" in f else
+                np.full((n, 3, 3), np.nan, dtype=np.float32).tolist()
+            )
+            obj.dipole_tensor_min = (
+                f["dipole_tensor_min"][()].tolist() if "dipole_tensor_min" in f else
+                np.full((n, 3, 3), np.nan, dtype=np.float32).tolist()
+            )
+            obj.inertia_moments_qm = (
+                f["inertia_moments_qm"][()].tolist() if "inertia_moments_qm" in f else
+                np.full((n, 3), np.nan, dtype=np.float32).tolist()
+            )
+            obj.inertia_moments_min = (
+                f["inertia_moments_min"][()].tolist() if "inertia_moments_min" in f else
+                np.full((n, 3), np.nan, dtype=np.float32).tolist()
+            )
+            obj.total_charge = (
+                f["total_charge"][()].tolist() if "total_charge" in f else
+                np.full(n, np.nan, dtype=np.float32).tolist()
+            )
 
         return obj
 
@@ -293,6 +372,14 @@ class BenchmarkResults:
         start = self.offsets[idx]
         end   = self.offsets[idx + 1]
         return self.coords_min[start:end]
+
+    def get_partial_charges_for_mol(self, idx: int) -> np.ndarray:
+        """
+        Convenience accessor: partial charges for molecule `idx`.
+        """
+        start = self.offsets[idx]
+        end   = self.offsets[idx + 1]
+        return self.partial_charges[start:end]
 
     def save_aligned_qm_ff_pdb(
         self,

@@ -1,0 +1,33 @@
+# Minimal SPICE download for dipole benchmarking.
+#
+# `dft total energy` is needed by downloader.py to write formation_energy.
+# `dft total gradient` is needed when `max_force` is enabled.
+# `scf dipole` is the QM reference dipole used by validation/benchmarks/calc_dipoles.py.
+subsets:
+  - 'SPICE Solvated Amino Acids Single Points Dataset v1.1'
+  - 'SPICE Dipeptides Single Points Dataset v1.3'
+  - 'SPICE DES Monomers Single Points Dataset v1.1'
+  - 'SPICE DES370K Single Points Dataset v1.0'
+  - 'SPICE DES370K Single Points Dataset Supplement v1.1'
+  - 'SPICE PubChem Set 1 Single Points Dataset v1.3'
+  - 'SPICE PubChem Set 2 Single Points Dataset v1.3'
+  - 'SPICE PubChem Set 3 Single Points Dataset v1.3'
+  - 'SPICE PubChem Set 4 Single Points Dataset v1.3'
+  - 'SPICE PubChem Set 5 Single Points Dataset v1.3'
+  - 'SPICE PubChem Set 6 Single Points Dataset v1.3'
+  - 'SPICE PubChem Set 7 Single Points Dataset v1.0'
+  - 'SPICE PubChem Set 8 Single Points Dataset v1.0'
+  - 'SPICE PubChem Set 9 Single Points Dataset v1.0'
+  - 'SPICE PubChem Set 10 Single Points Dataset v1.0'
+  - 'SPICE Ion Pairs Single Points Dataset v1.2'
+  - 'SPICE PubChem Boron Silicon v1.0'
+  - 'SPICE Solvated PubChem Set 1 v1.0'
+  - 'SPICE Water Clusters v1.0'
+  - 'SPICE Amino Acid Ligand v1.0'
+
+values:
+  - 'dft total energy'
+  - 'dft total gradient'
+  - 'scf dipole'
+
+max_force: 1.0

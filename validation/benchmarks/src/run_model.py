@@ -14,7 +14,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from warnings import warn
 
-trained_model_fp = "./params_txt/64_7_ep12/model.pt"
+trained_model_fp = Path("../../garnetff/trained_models/v_0_1_0.pt")
 
 element_indices = {
     1 : 0 , 3 : 1 , 5 : 2 , 6 : 3 , 7 : 4 , 8 : 5 , # H  Li B  C  N  O

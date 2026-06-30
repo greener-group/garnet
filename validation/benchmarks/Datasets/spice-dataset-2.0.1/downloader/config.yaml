@@ -1,0 +1,43 @@
+# This section specifies which data subsets to include.  Comment out any ones you want to omit.
+subsets:
+  # The following subsets make up SPICE version 2.
+  - 'SPICE Solvated Amino Acids Single Points Dataset v1.1'
+  - 'SPICE Dipeptides Single Points Dataset v1.3'
+  - 'SPICE DES Monomers Single Points Dataset v1.1'
+  - 'SPICE DES370K Single Points Dataset v1.0'
+  - 'SPICE DES370K Single Points Dataset Supplement v1.1'
+  - 'SPICE PubChem Set 1 Single Points Dataset v1.3'
+  - 'SPICE PubChem Set 2 Single Points Dataset v1.3'
+  - 'SPICE PubChem Set 3 Single Points Dataset v1.3'
+  - 'SPICE PubChem Set 4 Single Points Dataset v1.3'
+  - 'SPICE PubChem Set 5 Single Points Dataset v1.3'
+  - 'SPICE PubChem Set 6 Single Points Dataset v1.3'
+  - 'SPICE PubChem Set 7 Single Points Dataset v1.0'
+  - 'SPICE PubChem Set 8 Single Points Dataset v1.0'
+  - 'SPICE PubChem Set 9 Single Points Dataset v1.0'
+  - 'SPICE PubChem Set 10 Single Points Dataset v1.0'
+  - 'SPICE Ion Pairs Single Points Dataset v1.2'
+  - 'SPICE PubChem Boron Silicon v1.0'
+  - 'SPICE Solvated PubChem Set 1 v1.0'
+  - 'SPICE Water Clusters v1.0'
+  - 'SPICE Amino Acid Ligand v1.0'
+
+# This section specifies which data values to include.  The following are all of the most common choices.  Comment
+# out ones you do not want.  Other less common values are also available.  For a full list of available values,
+# and for descriptions of what each one means, see https://psicode.org/psi4manual/1.5.0/glossary_psivariables.html.
+values:
+  - 'dft total energy'
+  - 'dft total gradient'
+  - 'mbis charges'
+  - 'mbis dipoles'
+  - 'mbis quadrupoles'
+  - 'mbis octupoles'
+  - 'scf dipole'
+  - 'scf quadrupole'
+  - 'wiberg lowdin indices'
+  - 'mayer indices'
+
+# This specifies a cutoff on forces.  A sample will be skipped if any component of the force on any atom
+# is larger than this value (in hartree/bohr).  Comment out this line to include all samples regardless of
+# force magnitude.
+max_force: 1.0

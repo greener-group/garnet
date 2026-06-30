@@ -10,6 +10,7 @@ The code here has been used to produce the HDF5 benchmark result files (not incl
 ## What Each Script Does
 
 - `main.py`: runs the small-molecule minimization benchmark for one backend (`openff`, `espaloma`, `garnet`, `mace`) and writes an HDF5 result file.
+- `calc_dipoles.ipynb`: documents and runs the SPICE dipole benchmark, comparing OpenFF/Espaloma/Garnet partial-charge dipoles against QM `scf_dipole` values.
 - `postprocess.py`: loads the four model HDF5 files, builds comparative plots, runs motif enrichment, and writes per-model enrichment CSV files + heatmaps.
 - `enrich_analysis.py`: aggregates enrichment CSV files and writes manuscript-ready LaTeX tables into `latex_tables_formatted/`.
 - `nmr_analysis.py`: computes J-coupling/H-bond observables from MD trajectories and writes a `results_jcoup_*.pk` file.
@@ -18,6 +19,8 @@ The code here has been used to produce the HDF5 benchmark result files (not incl
 ## Repository Inputs Expected By The Pipeline
 
 - `Datasets/Industry/OpenFF_1.2.json` for small-molecule records.
+- `Datasets/spice-dataset-2.0.1/SPICE-dipoles.hdf5` for the SPICE QM dipole benchmark.
+- `../../training/splits/molecules_test.txt` for the Garnet hold-out molecule IDs used by the dipole benchmark.
 - `NMR_Data/J_coupling/...` and `NMR_Data/J_coupling/HBONDS/...` for NMR experimental references.
 - A simulation root for `nmr_analysis.py` with this layout:
   - `structures/gb3.pdb`, `structures/ubiquitin.pdb`, `structures/bpti.pdb`, `structures/hewl.pdb`.
@@ -75,6 +78,34 @@ python enrich_analysis.py
 ```
 
 Outputs go to `latex_tables_formatted/`.
+
+## SPICE Dipole Workflow
+
+The dipole benchmark uses the Garnet hold-out test split and the SPICE HDF5 file that contains QM `scf_dipole` values. It compares dipoles predicted from OpenFF, Espaloma, and Garnet atom-centered partial charges against the SPICE QM dipoles. MACE-OFF is not included in this benchmark because it does not directly assign partial charges.
+
+The recommended entry point is the notebook:
+
+```bash
+jupyter lab calc_dipoles.ipynb
+```
+
+The notebook is written as the main guide for the calculation. It explains the unit conversions, principal-axis frame, right-handed eigenvector convention, multicomponent SPICE handling, and tensor metrics. The expensive step is charge assignment. After a CSV has been written, set `RESULTS_FP` in the notebook to that CSV and keep `RUN_FORCE_FIELD_ANALYSIS = False` to recompute metrics and plots without rerunning the force fields.
+
+The output CSV contains one row per `(molecule, conformer, backend)` on the SPICE/QM conformation only. No force-field minimization is performed. Each row stores the projected QM and force-field dipoles, dipole tensor components, inertia moments, total charge, number of disconnected components, and scalar comparison metrics:
+
+- `mag_diff`: difference in projected dipole magnitudes.
+- `vec_diff`: Euclidean norm of the projected vector difference.
+- `angle_deg`: angle between projected QM and force-field dipoles.
+- `D_diff`: absolute Frobenius norm difference between dipole tensors.
+- `D_rel`: guarded QM-relative tensor difference.
+- `D_rel_qm`: raw QM-relative tensor difference.
+- `D_rel_max`: symmetric tensor difference normalized by the larger tensor norm.
+
+For disconnected SPICE entries, the mapped SMILES is split into components for charge assignment, then charges and masses are reassembled into the original SPICE atom order using atom-map numbers. The final COM, inertia tensor, dipole, and tensor metrics are always computed for the full SPICE assembly.
+
+This produces:
+  - `dipole_vector_diffs.pdf`
+  - `dipole_tensor_diffs.pdf`
 
 ## NMR Workflow
 
