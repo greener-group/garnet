@@ -1,0 +1,8 @@
+tolerance 2.0
+output condensed_data/starting_structures/vapourisation_liquid_CCCS.pdb
+filetype pdb
+connect yes
+pbc 30.0 30.0 30.0
+structure condensed_data/monomers/CCCS.pdb
+  number 178
+end structure
