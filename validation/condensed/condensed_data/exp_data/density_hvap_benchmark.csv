@@ -1,0 +1,16 @@
+name,density_exp,T_density_C,DeltaH_vap_exp,T_vap_C,n_atoms,SMILES,Notes
+benzene,0.8765,20,8.15,20,12,c1ccccc1,"Hvap from Garnet training data"
+water,1,20,10.56,20,3,O,"Hvap from Garnet training data"
+methanol,0.792,20,8.995,20,6,CO,"Hvap from Garnet training data"
+butane,0.602,-0.5,5.02,-0.5,14,CCCC,
+cyclohexane,0.774,25,7.89,25,18,C1CCCCC1,
+2-propanol,0.781,25,10.85,25,12,CC(O)C,
+phenol,1.055,45,13.71,56,13,C1=CC=C(C=C1)O,
+1-propanethiol,0.836,25,7.62,25,12,CCCS,
+acetic acid,1.045,25,12.33,25,8,CC(O)=O,
+acetone,0.785,25,7.47,25,10,CC(=O)C,
+N-methylpropanamide,0.931,25,15.5,25,15,CCC(=O)NC,
+trichloromethane ,1.479,25,7.48,25,5,C(Cl)(Cl)Cl,
+4-methyl thiazole,1.112,25,10.48,25,11,CC1=CSC=N1,
+ﬂuorobenzene,1.024,25,8.29,25,12,FC1=CC=CC=C1,
+trimethylphosphate,1.197,25,11.4,25,17,COP(=O)(OC)OC,

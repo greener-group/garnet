@@ -1,0 +1,8 @@
+tolerance 2.0
+output condensed_data/starting_structures/vapourisation_liquid_CC1=CSC=N1.pdb
+filetype pdb
+connect yes
+pbc 30.0 30.0 30.0
+structure condensed_data/monomers/CC1=CSC=N1.pdb
+  number 182
+end structure
