@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.data import Data
 from torch_geometric.nn.conv import SAGEConv
-from openmm.app import ForceField, NoCutoff, CutoffNonPeriodic, CutoffPeriodic, Ewald, PME, LJPME
+from openmm.app import ForceField, PDBFile, NoCutoff, CutoffNonPeriodic, CutoffPeriodic, Ewald, PME, LJPME
 from openmm.unit import nanometer
 import networkx as nx
 import igraph as ig
@@ -15,6 +15,7 @@ from datetime import datetime
 from operator import itemgetter
 from tempfile import NamedTemporaryFile
 from warnings import warn
+from io import StringIO
 import os
 
 pkg_version = "0.1.0"
@@ -39,6 +40,29 @@ atomic_masses = [
 
 torsion_periodicities = list(range(1, 6 + 1))
 torsion_phases = [0.0 if i % 2 == 0 else torch.pi for i in range(6)]
+
+def get_atom_types(data, prefix=None):
+    prefix_str = "" if prefix is None else prefix + "_"
+    element_counts = [0] * len(element_i_to_name)
+    atom_types = []
+    for ei in data.elements:
+        element_counts[ei] += 1
+        el = element_i_to_name[ei]
+        atom_types.append(f"{prefix_str}{el}{element_counts[ei]}")
+    return atom_types
+
+def get_isomorphic_atom_mapping(mol, ref_mol):
+    graph = mol.to_networkx()
+    ref_graph = ref_mol.to_networkx()
+
+    def node_match(a, b):
+        return a["atomic_number"] == b["atomic_number"]
+
+    matcher = nx.algorithms.isomorphism.GraphMatcher(graph, ref_graph, node_match=node_match)
+    try:
+        return next(matcher.isomorphisms_iter())
+    except StopIteration:
+        raise ValueError("Could not map isomorphic molecules")
 
 class DenseNet(nn.Module):
     def __init__(self, dim_in, dim_out):
@@ -165,9 +189,12 @@ class Model(nn.Module):
         mol_names_used = []
         prev_atom_count, prev_mol_count = 0, 0
         mols = list(topology.molecules)
+        topology_atom_template_inds = []
+        topology_mol_template_atom_inds = []
 
         for mol_i, mol in enumerate(mols):
             if mol.n_atoms == 0:
+                topology_mol_template_atom_inds.append([])
                 continue
             already_processed = False
             for mol_j in range(mol_i):
@@ -175,7 +202,17 @@ class Model(nn.Module):
                     already_processed = True
                     break
             if already_processed:
+                mapping = get_isomorphic_atom_mapping(mol, mols[mol_j])
+                template_atom_inds = [
+                    topology_mol_template_atom_inds[mol_j][mapping[i]] for i in range(mol.n_atoms)
+                ]
+                topology_atom_template_inds.extend(template_atom_inds)
+                topology_mol_template_atom_inds.append(template_atom_inds)
                 continue
+
+            topology_mol_template_atom_inds.append([
+                prev_atom_count + i for i in range(mol.n_atoms)
+            ])
 
             for i, a in enumerate(mol.atoms):
                 an = a.atomic_number
@@ -276,6 +313,7 @@ class Model(nn.Module):
             else:
                 for mi in range(n_mols):
                     mol_names_used.append(f"{name_prefix}_{mi+1}")
+            topology_atom_template_inds.extend(topology_mol_template_atom_inds[mol_i])
 
             prev_atom_count += mol.n_atoms
             prev_mol_count = max(molecule_inds) + 1
@@ -288,10 +326,11 @@ class Model(nn.Module):
                     angle_is=angle_is, angle_js=angle_js, angle_ks=angle_ks,
                     proper_is=proper_is, proper_js=proper_js, proper_ks=proper_ks, proper_ls=proper_ls,
                     improper_is=improper_is, improper_js=improper_js, improper_ks=improper_ks,
-                    improper_ls=improper_ls, molecule_inds=molecule_inds, mol_names=mol_names_used)
+                    improper_ls=improper_ls, molecule_inds=molecule_inds, mol_names=mol_names_used,
+                    topology_atom_template_inds=topology_atom_template_inds)
         return data
 
-    def data_to_xml(self, ff_xml_fp, data, prefix=None):
+    def data_to_xml(self, ff_xml_fp, data, prefix=None, write_top=False):
         atom_embeddings = self.atom_embed(data)               # (n_atoms, 64)
         atom_features = self.atom_features(atom_embeddings)   # (n_atoms, 4)
 
@@ -367,12 +406,7 @@ class Model(nn.Module):
         angle_θ0s = transform_angle_θ0(angle_features)
 
         prefix_str = "" if prefix is None else prefix + "_"
-        element_counts = [0] * len(element_i_to_name)
-        atom_types = []
-        for ei in data.elements:
-            element_counts[ei] += 1
-            el = element_i_to_name[ei]
-            atom_types.append(f"{prefix_str}{el}{element_counts[ei]}")
+        atom_types = get_atom_types(data, prefix=prefix)
 
         with open(ff_xml_fp, "wt") as of:
             of.write("<ForceField>\n")
@@ -393,15 +427,16 @@ class Model(nn.Module):
             for mol_i in range(n_molecules):
                 mol_name = prefix_str + data.mol_names[mol_i]
                 atom_inds = [i for i, mi in enumerate(data.molecule_inds) if mi == mol_i]
+                atom_inds_set = set(atom_inds)
                 of.write(f"    <Residue name=\"{mol_name}\">\n")
                 for ai in atom_inds:
                     at, pc = atom_types[ai], partial_charges[ai]
                     of.write(f"      <Atom name=\"{at}\" type=\"{at}\" charge=\"{pc}\"/>\n")
                 for bi, bj in zip(data.bond_is, data.bond_js):
-                    if bi in atom_inds and bj in atom_inds:
+                    if bi in atom_inds_set and bj in atom_inds_set:
                         at1, at2 = atom_types[bi], atom_types[bj]
                         of.write(f"      <Bond atomName1=\"{at1}\" atomName2=\"{at2}\"/>\n")
-                    elif bi in atom_inds or bj in atom_inds:
+                    elif bi in atom_inds_set or bj in atom_inds_set:
                         raise ValueError(f"Atoms {bi+1} and {bj+1} are bonded but are in different molecules")
                 of.write("    </Residue>\n")
             of.write("  </Residues>\n")
@@ -467,10 +502,92 @@ class Model(nn.Module):
             of.write("  </CustomNonbondedForce>\n")
             of.write("</ForceField>\n")
 
-    def topology_to_openmm_xml(self, ff_xml_fp, topology, mol_names=None, prefix=None):
+        if write_top:
+            top_xml_fp = os.path.join(os.path.dirname(os.path.abspath(ff_xml_fp)), "residues.xml")
+            with open(top_xml_fp, "wt") as of:
+                of.write("<Residues>\n")
+                for mol_i in range(n_molecules):
+                    mol_name = prefix_str + data.mol_names[mol_i]
+                    atom_inds = [i for i, mi in enumerate(data.molecule_inds) if mi == mol_i]
+                    atom_inds_set = set(atom_inds)
+                    of.write(f"  <Residue name=\"{mol_name}\">\n")
+                    for bi, bj in zip(data.bond_is, data.bond_js):
+                        if bi in atom_inds_set and bj in atom_inds_set:
+                            at1, at2 = atom_types[bi], atom_types[bj]
+                            of.write(f"    <Bond from=\"{at1}\" to=\"{at2}\"/>\n")
+                        elif bi in atom_inds_set or bj in atom_inds_set:
+                            raise ValueError(f"Atoms {bi+1} and {bj+1} are bonded but are in different molecules")
+                    of.write("  </Residue>\n")
+                of.write("</Residues>\n")
+
+    def topology_to_pdb(self, pdb_fp, topology, data, prefix=None, write_conect=False):
+        positions = topology.get_positions()
+        if positions is None:
+            raise ValueError("write_pdb=True requires topology positions")
+
+        atom_types = get_atom_types(data, prefix=prefix)
+        prefix_str = "" if prefix is None else prefix + "_"
+        top_openmm = topology.to_openmm()
+        top_atoms = list(top_openmm.atoms())
+        if len(top_atoms) != len(data.topology_atom_template_inds):
+            raise ValueError("Topology atom count does not match Garnet atom mapping")
+
+        atom_residue_ids = []
+        atom_i, residue_i = 0, 1
+        for mol in topology.molecules:
+            component_residue_ids = {}
+            for _ in mol.atoms:
+                template_ai = data.topology_atom_template_inds[atom_i]
+                component_i = data.molecule_inds[template_ai]
+                if component_i not in component_residue_ids:
+                    component_residue_ids[component_i] = str(residue_i)
+                    residue_i += 1
+                atom_residue_ids.append(component_residue_ids[component_i])
+                atom_i += 1
+
+        residue_assignments = {}
+        for atom, residue_id, template_ai in zip(top_atoms, atom_residue_ids, data.topology_atom_template_inds):
+            atom_name = atom_types[template_ai]
+            residue_name = prefix_str + data.mol_names[data.molecule_inds[template_ai]]
+            if len(atom_name) > 4:
+                raise ValueError(f"PDB atom name {atom_name} is longer than 4 characters")
+            if len(residue_name) > 3:
+                raise ValueError(f"PDB residue name {residue_name} is longer than 3 characters")
+            assignment = residue_name, residue_id
+            if atom.residue in residue_assignments and residue_assignments[atom.residue] != assignment:
+                raise ValueError("write_pdb=True cannot split one OpenMM residue into multiple Garnet residues")
+            residue_assignments[atom.residue] = assignment
+            atom.name = atom_name
+            atom.residue.name = residue_name
+            atom.residue.id = residue_id
+            atom.residue.insertionCode = " "
+
+        pdb_io = StringIO()
+        PDBFile.writeFile(
+            top_openmm,
+            positions.to_openmm(),
+            file=pdb_io,
+            keepIds=True,
+            extraParticleIdentifier="EP",
+        )
+        pdb_lines = pdb_io.getvalue().splitlines()
+        if not write_conect:
+            pdb_lines = [line for line in pdb_lines if not line.startswith("CONECT")]
+        with open(pdb_fp, "wt") as of:
+            of.write("\n".join(pdb_lines) + "\n")
+
+    def topology_to_openmm_xml(self, ff_xml_fp, topology, mol_names=None, prefix=None,
+                               write_top=False, write_pdb=False, write_pdb_conect=False):
+        if write_pdb and mol_names is None:
+            mol_names = [f"M{i+1}" for i in range(topology.n_molecules)]
+        pdb_fp = os.path.splitext(os.fspath(ff_xml_fp))[0] + ".pdb"
+        if write_pdb and topology.get_positions() is None:
+            raise ValueError("write_pdb=True requires topology positions")
         with torch.no_grad():
             data = self.topology_to_data(topology, mol_names=mol_names)
-            self.data_to_xml(ff_xml_fp, data, prefix=prefix)
+            self.data_to_xml(ff_xml_fp, data, prefix=prefix, write_top=write_top)
+        if write_pdb:
+            self.topology_to_pdb(pdb_fp, topology, data, prefix=prefix, write_conect=write_pdb_conect)
 
     def topology_to_openmm_system(self, topology, nonbondedMethod=NoCutoff,
                                   nonbondedCutoff=1*nanometer, constraints=None, rigidWater=False,
