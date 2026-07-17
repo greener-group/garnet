@@ -112,7 +112,7 @@ def test_pdb_written_with_xml_names(tmp_path):
     ff_xml_fp = tmp_path / "alanine.xml"
     pdb_xml_fp = tmp_path / "alanine_named.pdb"
 
-    garnet.topology_to_openmm_xml(ff_xml_fp, topology, mol_names=["ALA"], write_pdb=pdb_xml_fp)
+    garnet.topology_to_openmm_xml(ff_xml_fp, topology, mol_names=["M1"], write_pdb=pdb_xml_fp)
 
     assert ff_xml_fp.exists()
     assert pdb_xml_fp.exists()
