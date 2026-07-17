@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.data import Data
 from torch_geometric.nn.conv import SAGEConv
-from openmm.app import ForceField, PDBFile, NoCutoff, CutoffNonPeriodic, CutoffPeriodic, Ewald, PME, LJPME
+from openmm.app import ForceField, PDBFile, PDBxFile, NoCutoff, CutoffNonPeriodic, CutoffPeriodic, Ewald, PME, LJPME
 from openmm.unit import nanometer
 import networkx as nx
 import igraph as ig
@@ -330,7 +330,7 @@ class Model(nn.Module):
                     topology_atom_template_inds=topology_atom_template_inds)
         return data
 
-    def data_to_xml(self, ff_xml_fp, data, prefix=None, write_top=False):
+    def data_to_xml(self, ff_xml_fp, data, prefix=None, write_top=None):
         atom_embeddings = self.atom_embed(data)               # (n_atoms, 64)
         atom_features = self.atom_features(atom_embeddings)   # (n_atoms, 4)
 
@@ -502,9 +502,10 @@ class Model(nn.Module):
             of.write("  </CustomNonbondedForce>\n")
             of.write("</ForceField>\n")
 
-        if write_top:
-            top_xml_fp = os.path.join(os.path.dirname(os.path.abspath(ff_xml_fp)), "residues.xml")
-            with open(top_xml_fp, "wt") as of:
+        if write_top is not None:
+            if isinstance(write_top, bool):
+                raise TypeError("write_top must be a file path or None")
+            with open(write_top, "wt") as of:
                 of.write("<Residues>\n")
                 for mol_i in range(n_molecules):
                     mol_name = prefix_str + data.mol_names[mol_i]
@@ -523,10 +524,11 @@ class Model(nn.Module):
     def topology_to_pdb(self, pdb_fp, topology, data, prefix=None, write_conect=False):
         positions = topology.get_positions()
         if positions is None:
-            raise ValueError("write_pdb=True requires topology positions")
+            raise ValueError("write_pdb requires topology positions")
 
         atom_types = get_atom_types(data, prefix=prefix)
         prefix_str = "" if prefix is None else prefix + "_"
+        write_cif = os.path.splitext(os.fspath(pdb_fp))[1].lower() in (".cif", ".mmcif")
         top_openmm = topology.to_openmm()
         top_atoms = list(top_openmm.atoms())
         if len(top_atoms) != len(data.topology_atom_template_inds):
@@ -549,18 +551,23 @@ class Model(nn.Module):
         for atom, residue_id, template_ai in zip(top_atoms, atom_residue_ids, data.topology_atom_template_inds):
             atom_name = atom_types[template_ai]
             residue_name = prefix_str + data.mol_names[data.molecule_inds[template_ai]]
-            if len(atom_name) > 4:
+            if not write_cif and len(atom_name) > 4:
                 raise ValueError(f"PDB atom name {atom_name} is longer than 4 characters")
-            if len(residue_name) > 3:
+            if not write_cif and len(residue_name) > 3:
                 raise ValueError(f"PDB residue name {residue_name} is longer than 3 characters")
             assignment = residue_name, residue_id
             if atom.residue in residue_assignments and residue_assignments[atom.residue] != assignment:
-                raise ValueError("write_pdb=True cannot split one OpenMM residue into multiple Garnet residues")
+                raise ValueError("write_pdb cannot split one OpenMM residue into multiple Garnet residues")
             residue_assignments[atom.residue] = assignment
             atom.name = atom_name
             atom.residue.name = residue_name
             atom.residue.id = residue_id
             atom.residue.insertionCode = " "
+
+        if write_cif:
+            with open(pdb_fp, "wt") as of:
+                PDBxFile.writeFile(top_openmm, positions.to_openmm(), file=of, keepIds=True)
+            return
 
         pdb_io = StringIO()
         PDBFile.writeFile(
@@ -577,17 +584,20 @@ class Model(nn.Module):
             of.write("\n".join(pdb_lines) + "\n")
 
     def topology_to_openmm_xml(self, ff_xml_fp, topology, mol_names=None, prefix=None,
-                               write_top=False, write_pdb=False, write_pdb_conect=False):
-        if write_pdb and mol_names is None:
+                               write_top=None, write_pdb=None, write_pdb_conect=False):
+        if isinstance(write_top, bool):
+            raise TypeError("write_top must be a file path or None")
+        if isinstance(write_pdb, bool):
+            raise TypeError("write_pdb must be a file path or None")
+        if write_pdb is not None and mol_names is None:
             mol_names = [f"M{i+1}" for i in range(topology.n_molecules)]
-        pdb_fp = os.path.splitext(os.fspath(ff_xml_fp))[0] + ".pdb"
-        if write_pdb and topology.get_positions() is None:
-            raise ValueError("write_pdb=True requires topology positions")
+        if write_pdb is not None and topology.get_positions() is None:
+            raise ValueError("write_pdb requires topology positions")
         with torch.no_grad():
             data = self.topology_to_data(topology, mol_names=mol_names)
             self.data_to_xml(ff_xml_fp, data, prefix=prefix, write_top=write_top)
-        if write_pdb:
-            self.topology_to_pdb(pdb_fp, topology, data, prefix=prefix, write_conect=write_pdb_conect)
+        if write_pdb is not None:
+            self.topology_to_pdb(write_pdb, topology, data, prefix=prefix, write_conect=write_pdb_conect)
 
     def topology_to_openmm_system(self, topology, nonbondedMethod=NoCutoff,
                                   nonbondedCutoff=1*nanometer, constraints=None, rigidWater=False,

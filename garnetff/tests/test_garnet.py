@@ -4,7 +4,7 @@ from garnetff import garnet
 from openff.toolkit.topology import Molecule, Topology
 from openff.pablo import topology_from_pdb
 from openmm import LangevinMiddleIntegrator
-from openmm.app import PME, HBonds, Simulation, PDBFile
+from openmm.app import PME, HBonds, Simulation, PDBFile, PDBxFile
 from openmm.unit import nanometer, picosecond, kelvin, kilojoules_per_mole
 import os
 import xml.etree.ElementTree as ET
@@ -53,16 +53,16 @@ def test_topology_xml_written(tmp_path):
     mol = Molecule.from_smiles("[H]O[H]", hydrogens_are_explicit=True)
     topology = Topology.from_molecules(molecules=[mol])
     ff_xml_fp = tmp_path / "water.xml"
+    top_xml_fp = tmp_path / "water_residues.xml"
 
     garnet.topology_to_openmm_xml(
         ff_xml_fp,
         topology,
         mol_names=["HOH"],
         prefix="T",
-        write_top=True,
+        write_top=top_xml_fp,
     )
 
-    top_xml_fp = tmp_path / "residues.xml"
     assert ff_xml_fp.exists()
     assert top_xml_fp.exists()
 
@@ -84,19 +84,36 @@ def test_pdb_write_requires_positions(tmp_path):
     topology = Topology.from_molecules(molecules=[mol])
 
     try:
-        garnet.topology_to_openmm_xml(tmp_path / "water.xml", topology, write_pdb=True)
+        garnet.topology_to_openmm_xml(
+            tmp_path / "water.xml",
+            topology,
+            write_pdb=tmp_path / "water.pdb",
+        )
     except ValueError as e:
-        assert str(e) == "write_pdb=True requires topology positions"
+        assert str(e) == "write_pdb requires topology positions"
     else:
         assert False
 
+def test_write_paths_do_not_accept_booleans(tmp_path):
+    mol = Molecule.from_smiles("[H]O[H]", hydrogens_are_explicit=True)
+    topology = Topology.from_molecules(molecules=[mol])
+
+    for kw in ("write_top", "write_pdb"):
+        try:
+            garnet.topology_to_openmm_xml(tmp_path / f"{kw}.xml", topology, **{kw: True})
+        except TypeError as e:
+            assert str(e) == f"{kw} must be a file path or None"
+        else:
+            assert False
+
 def test_pdb_written_with_xml_names(tmp_path):
-    topology = topology_from_pdb(os.path.join(data_dir, "gb3.pdb"))
-    ff_xml_fp = tmp_path / "gb3.xml"
+    mol = Molecule.from_file(os.path.join(data_dir, "zw_l_alanine.sdf"))
+    topology = Topology.from_molecules(molecules=[mol])
+    ff_xml_fp = tmp_path / "alanine.xml"
+    pdb_xml_fp = tmp_path / "alanine_named.pdb"
 
-    garnet.topology_to_openmm_xml(ff_xml_fp, topology, write_pdb=True)
+    garnet.topology_to_openmm_xml(ff_xml_fp, topology, mol_names=["ALA"], write_pdb=pdb_xml_fp)
 
-    pdb_xml_fp = tmp_path / "gb3.pdb"
     assert ff_xml_fp.exists()
     assert pdb_xml_fp.exists()
     assert "CONECT" not in pdb_xml_fp.read_text()
@@ -112,6 +129,17 @@ def test_pdb_written_with_xml_names(tmp_path):
         assert residue.name in xml_residues
         for atom in residue.atoms():
             assert atom.name in xml_residues[residue.name]
+
+def test_cif_written_for_long_residue_names(tmp_path):
+    topology = topology_from_pdb(os.path.join(data_dir, "gb3.pdb"))
+    ff_xml_fp = tmp_path / "gb3.xml"
+    cif_fp = tmp_path / "gb3.cif"
+
+    garnet.topology_to_openmm_xml(ff_xml_fp, topology, write_pdb=cif_fp)
+
+    assert ff_xml_fp.exists()
+    assert cif_fp.exists()
+    assert sum(1 for _ in PDBxFile(str(cif_fp)).topology.residues()) == topology.n_molecules
 
 def test_sdf():
     mol = Molecule.from_file(os.path.join(data_dir, "zw_l_alanine.sdf"))
