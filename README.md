@@ -106,6 +106,7 @@ system, top_openmm = garnet.topology_to_openmm_system(topology)
 The default options for `topology_to_openmm_system` are `nonbondedMethod=NoCutoff`, `nonbondedCutoff=1*nanometer`, `constraints=None` and `rigidWater=False`.
 It is important to select these parameters carefully as described in the [the OpenMM documentation](https://docs.openmm.org/latest/userguide/application/02_running_sims.html#simulation-parameters).
 Assigning parameters is usually fast (a few seconds), but for some molecules it can take a minute or so due to graph isomorphism checks.
+Due to the custom non-bonded interaction, Garnet runs 15-20% slower than standard simulations with the Lennard-Jones potential in OpenMM.
 If you want to use Garnet with simulation software other than OpenMM, you could try conversion software such as [ParmEd](https://parmed.github.io/ParmEd/html/index.html) or [OpenFF Interchange](https://docs.openforcefield.org/projects/interchange/en/stable).
 
 ### Binding free energy calculations
