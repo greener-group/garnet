@@ -2431,7 +2431,7 @@ end
 
 # This function implements an incorrect equation compared to the equation in the paper
 # It is left incorrect here since it was used to train the model
-# A correct implementation may give better results
+# A correct implementation is commented out below and may give better results
 function protein_loss_grads(mol_id, training_sim_dir, traj_pes, traj_chem_shifts, frames,
                             calc_grads, models...)
     TZ = Float64 # Use higher precision for partition functions
@@ -2516,6 +2516,95 @@ function protein_loss_grads(mol_id, training_sim_dir, traj_pes, traj_chem_shifts
     dlcs_dp = multiply_grads(accum_grads.(lcs_dE_dp_mean, minus_lcs_mean_dE_dp_mean), T(-β) * n_atoms)
     return loss_jc_mean, loss_cs_mean, dljc_dp, dlcs_dp
 end
+
+#=
+# A correct implementation, see above
+function protein_loss_grads(mol_id, training_sim_dir, traj_pes, traj_chem_shifts, frames,
+                            calc_grads, models...)
+    TZ = Float64 # Use higher precision for partition functions
+    _, protein = split(mol_id, "_")
+    feature_line = mol_features_prot["protein_$(protein)_full"]
+    chem_shifts_sim, chem_shifts_exp = traj_chem_shifts[protein], chem_shift_data[protein]
+    traj = Chemfiles.Trajectory(joinpath(training_sim_dir, "protein", "$protein.dcd"))
+
+    coords_list, boundary_list = Vector{SVector{3, T}}[], CubicBoundary{3, T, T}[]
+    for (i, frame_i) in enumerate(frames)
+        frame = Chemfiles.read_step(traj, frame_i - 1) # Zero-based indexing
+        pos = Chemfiles.positions(frame)
+        coords = SVector{3, T}.(eachcol(pos)) ./ 10 # Convert to nm
+        box_sides = T.(Chemfiles.lengths(Chemfiles.UnitCell(frame))) ./ 10 # Convert to nm
+        boundary = CubicBoundary(box_sides...)
+        coords .= wrap_coords.(coords, (boundary,))
+        push!(coords_list, coords)
+        push!(boundary_list, boundary)
+    end
+    n_atoms = length(coords_list[1])
+    β = inv(calc_RT(TZ(298.0)) * n_atoms)
+    pes_ref = [traj_pes[protein][frame_i] for frame_i in frames]
+
+    n_chunks = Threads.nthreads()
+    loss_jc_sum_chunks, loss_cs_sum_chunks = zeros(T, n_chunks), zeros(T, n_chunks)
+    weight_sum_chunks = zeros(TZ, n_chunks) # Accumulates ratio of partition functions Z_tilde / Z
+    dE_dp_sum_chunks     = [convert(Vector{Any}, fill(nothing, length(models))) for _ in 1:n_chunks]
+    ljc_dE_dp_sum_chunks = [convert(Vector{Any}, fill(nothing, length(models))) for _ in 1:n_chunks]
+    lcs_dE_dp_sum_chunks = [convert(Vector{Any}, fill(nothing, length(models))) for _ in 1:n_chunks]
+    frame_count_chunks = zeros(Int, n_chunks)
+
+    Threads.@threads for chunk_id in 1:n_chunks
+        for i in chunk_id:n_chunks:length(frames)
+            frame_i, coords, boundary = frames[i], coords_list[i], boundary_list[i]
+            if calc_grads
+                pe, grads = Zygote.withgradient(pe_frame, mol_id, feature_line, coords,
+                                                boundary, models...)
+                dE_dp = grads[5:end]
+            else
+                pe = pe_frame(mol_id, feature_line, coords, boundary, models...)
+                dE_dp = convert(Vector{Any}, fill(nothing, length(models)))
+            end
+
+            if !isnan(pe) && check_no_nans(dE_dp)
+                frame_count_chunks[chunk_id] += 1
+                exp_mβ_pe_diff = T(exp(-β * TZ(pe - pes_ref[i])))
+                weight_sum_chunks[chunk_id] += exp_mβ_pe_diff
+                loss_jc = J_coupling_loss(protein, coords, boundary) * exp_mβ_pe_diff
+                loss_cs = chem_shift_loss(chem_shifts_sim[frame_i], chem_shifts_exp) * exp_mβ_pe_diff
+                loss_jc_sum_chunks[chunk_id] += loss_jc
+                loss_cs_sum_chunks[chunk_id] += loss_cs
+                dE_dp_sum_chunks[chunk_id] = accum_grads.(dE_dp_sum_chunks[chunk_id], 
+                                                          multiply_grads(dE_dp, exp_mβ_pe_diff))
+                ljc_dE_dp_sum_chunks[chunk_id] = accum_grads.(ljc_dE_dp_sum_chunks[chunk_id],
+                                                              multiply_grads(dE_dp, loss_jc))
+                lcs_dE_dp_sum_chunks[chunk_id] = accum_grads.(lcs_dE_dp_sum_chunks[chunk_id],
+                                                              multiply_grads(dE_dp, loss_cs))
+            end
+        end
+    end
+
+    dE_dp_sum     = convert(Vector{Any}, fill(nothing, length(models)))
+    ljc_dE_dp_sum = convert(Vector{Any}, fill(nothing, length(models)))
+    lcs_dE_dp_sum = convert(Vector{Any}, fill(nothing, length(models)))
+    for chunk_id in 1:n_chunks
+        dE_dp_sum = accum_grads.(dE_dp_sum, dE_dp_sum_chunks[chunk_id])
+    end
+    for chunk_id in 1:n_chunks
+        ljc_dE_dp_sum = accum_grads.(ljc_dE_dp_sum, ljc_dE_dp_sum_chunks[chunk_id])
+        lcs_dE_dp_sum = accum_grads.(lcs_dE_dp_sum, lcs_dE_dp_sum_chunks[chunk_id])
+    end
+
+    frame_count = sum(frame_count_chunks)
+    Z_ratio = inv(sum(weight_sum_chunks) / frame_count) # Z_tilde / Z
+    loss_jc_mean = T(Z_ratio) * sum(loss_jc_sum_chunks) / frame_count
+    loss_cs_mean = T(Z_ratio) * sum(loss_cs_sum_chunks) / frame_count
+    minus_ljc_mean_dE_dp_mean = multiply_grads(dE_dp_sum, -loss_jc_mean * T(Z_ratio) / frame_count)
+    minus_lcs_mean_dE_dp_mean = multiply_grads(dE_dp_sum, -loss_cs_mean * T(Z_ratio) / frame_count)
+    ljc_dE_dp_mean = multiply_grads(ljc_dE_dp_sum, T(Z_ratio / frame_count))
+    lcs_dE_dp_mean = multiply_grads(lcs_dE_dp_sum, T(Z_ratio / frame_count))
+    # Are we correct to use n_atoms here? Removing it gives very low gradients
+    dljc_dp = multiply_grads(accum_grads.(ljc_dE_dp_mean, minus_ljc_mean_dE_dp_mean), T(-β) * n_atoms) 
+    dlcs_dp = multiply_grads(accum_grads.(lcs_dE_dp_mean, minus_lcs_mean_dE_dp_mean), T(-β) * n_atoms) 
+    return loss_jc_mean, loss_cs_mean, dljc_dp, dlcs_dp
+end
+=#
 
 function combined_loss(mol_id, coords, dft_fs, dft_charges, models...)
     fs, pe, charges, torsion_ks_size, elements, molecule_inds = mol_to_preds(
