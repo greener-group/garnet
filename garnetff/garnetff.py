@@ -306,7 +306,7 @@ class Model(nn.Module):
                     mis[ai] = prev_mol_count + ci
             assert -1 not in mis
             molecule_inds.extend(mis)
-            name_prefix = f"MOL{mol_i+1}" if mol_names is None else mol_names[mol_i]
+            name_prefix = f"M{mol_i+1}" if mol_names is None else mol_names[mol_i]
             n_mols = len(set(mis))
             if n_mols == 1:
                 mol_names_used.append(name_prefix)
