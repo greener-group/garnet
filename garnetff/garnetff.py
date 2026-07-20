@@ -408,7 +408,7 @@ class Model(nn.Module):
         prefix_str = "" if prefix is None else prefix + "_"
         atom_types = get_atom_types(data, prefix=prefix)
 
-        with open(ff_xml_fp, "wt") as of:
+        with open(ff_xml_fp, "wt", encoding="utf-8") as of:
             of.write("<ForceField>\n")
             of.write("  <Info>\n")
             date_str = datetime.today().strftime("%Y-%m-%d")
@@ -505,7 +505,7 @@ class Model(nn.Module):
         if write_top is not None:
             if isinstance(write_top, bool):
                 raise TypeError("write_top must be a file path or None")
-            with open(write_top, "wt") as of:
+            with open(write_top, "wt", encoding="utf-8") as of:
                 of.write("<Residues>\n")
                 for mol_i in range(n_molecules):
                     mol_name = prefix_str + data.mol_names[mol_i]
@@ -565,7 +565,7 @@ class Model(nn.Module):
             atom.residue.insertionCode = " "
 
         if write_cif:
-            with open(pdb_fp, "wt") as of:
+            with open(pdb_fp, "wt", encoding="utf-8") as of:
                 PDBxFile.writeFile(top_openmm, positions.to_openmm(), file=of, keepIds=True)
             return
 
@@ -580,7 +580,7 @@ class Model(nn.Module):
         pdb_lines = pdb_io.getvalue().splitlines()
         if not write_conect:
             pdb_lines = [line for line in pdb_lines if not line.startswith("CONECT")]
-        with open(pdb_fp, "wt") as of:
+        with open(pdb_fp, "wt", encoding="utf-8") as of:
             of.write("\n".join(pdb_lines) + "\n")
 
     def topology_to_openmm_xml(self, ff_xml_fp, topology, mol_names=None, prefix=None,
