@@ -46,7 +46,9 @@ def test_pdb():
     simulation = Simulation(top_openmm, system, integrator)
     pdb = PDBFile(pdb_fp)
     simulation.context.setPositions(pdb.positions)
-    assert get_potential_energy(simulation) < -100000 * kilojoules_per_mole
+    energy = get_potential_energy(simulation)
+    expected_energy = -151439.84 * kilojoules_per_mole
+    assert abs(energy - expected_energy) < 5 * kilojoules_per_mole
 
     simulation.minimizeEnergy()
     simulation.context.setVelocitiesToTemperature(temp)
@@ -105,7 +107,7 @@ def test_topology_xml_written(tmp_path):
     bond_force = next(force for force in system.getForces() if isinstance(force, HarmonicBondForce))
     assert bond_force.getNumBonds() == 2
 
-def test_atom_type_equivalence_requires_automorphism_and_equal_parameters():
+def test_equivalent_atom_types():
     water = Molecule.from_smiles("[H]O[H]", hydrogens_are_explicit=True)
     water_data = garnet.topology_to_data(Topology.from_molecules([water]))
     hydrogen_inds = [i for i, element in enumerate(water_data.elements) if element == 0]

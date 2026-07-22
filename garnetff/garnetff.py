@@ -51,10 +51,6 @@ def get_atom_names(data, prefix=None):
         atom_names.append(f"{prefix_str}{el}{element_counts[ei]}")
     return atom_names
 
-def get_atom_types(data, prefix=None):
-    # Retain the original public helper's behaviour for compatibility.
-    return get_atom_names(data, prefix=prefix)
-
 parameter_tolerance = 1e-4
 
 def format_parameter(value):
