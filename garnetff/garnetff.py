@@ -41,15 +41,80 @@ atomic_masses = [
 torsion_periodicities = list(range(1, 6 + 1))
 torsion_phases = [0.0 if i % 2 == 0 else torch.pi for i in range(6)]
 
-def get_atom_types(data, prefix=None):
+def get_atom_names(data, prefix=None):
     prefix_str = "" if prefix is None else prefix + "_"
     element_counts = [0] * len(element_i_to_name)
-    atom_types = []
+    atom_names = []
     for ei in data.elements:
         element_counts[ei] += 1
         el = element_i_to_name[ei]
-        atom_types.append(f"{prefix_str}{el}{element_counts[ei]}")
+        atom_names.append(f"{prefix_str}{el}{element_counts[ei]}")
+    return atom_names
+
+def get_atom_types(data, prefix=None):
+    # Retain the original public helper's behaviour for compatibility.
+    return get_atom_names(data, prefix=prefix)
+
+parameter_tolerance = 1e-4
+
+def format_parameter(value):
+    return f"{float(value):.4f}"
+
+def get_equivalent_atom_types(data, atom_parameters, prefix=None):
+    graph = ig.Graph(
+        n=len(data.elements),
+        edges=list(zip(data.bond_is, data.bond_js)),
+        directed=False,
+    )
+    feature_colors, color_ids = {}, []
+    for features in data.x.tolist():
+        key = tuple(features)
+        color_ids.append(feature_colors.setdefault(key, len(feature_colors)))
+
+    parents = list(range(len(data.elements)))
+
+    def root(i):
+        while parents[i] != i:
+            parents[i] = parents[parents[i]]
+            i = parents[i]
+        return i
+
+    def union(i, j):
+        ri, rj = root(i), root(j)
+        if ri != rj:
+            parents[rj] = ri
+
+    for permutation in graph.automorphism_group(color=color_ids):
+        for i, j in enumerate(permutation):
+            union(i, j)
+
+    prefix_str = "" if prefix is None else prefix + "_"
+    element_counts = [0] * len(element_i_to_name)
+    groups, atom_types = [], []
+    for ai, ei in enumerate(data.elements):
+        atom_type = next((
+            at for orbit, parameters, at in groups
+            if orbit == root(ai) and torch.allclose(
+                parameters, atom_parameters[ai], rtol=0.0, atol=parameter_tolerance
+            )
+        ), None)
+        if atom_type is None:
+            element_counts[ei] += 1
+            atom_type = f"{prefix_str}{element_i_to_name[ei]}{element_counts[ei]}"
+            groups.append((root(ai), atom_parameters[ai], atom_type))
+        atom_types.append(atom_type)
     return atom_types
+
+def unique_parameter_indices(type_rows, reverse=False):
+    seen, indices = {}, []
+    for i, row in enumerate(type_rows):
+        key = tuple(row)
+        if reverse:
+            key = min(key, key[::-1])
+        if key not in seen:
+            seen[key] = i
+            indices.append(i)
+    return indices
 
 def get_isomorphic_atom_mapping(mol, ref_mol):
     graph = mol.to_networkx()
@@ -406,7 +471,28 @@ class Model(nn.Module):
         angle_θ0s = transform_angle_θ0(angle_features)
 
         prefix_str = "" if prefix is None else prefix + "_"
-        atom_types = get_atom_types(data, prefix=prefix)
+        atom_names = get_atom_names(data, prefix=prefix)
+        atom_parameters = torch.stack((partial_charges, σs, ϵs), dim=1)
+        atom_types = get_equivalent_atom_types(data, atom_parameters, prefix=prefix)
+
+        atom_type_inds = unique_parameter_indices([(at,) for at in atom_types])
+        bond_type_rows = [(atom_types[i], atom_types[j]) for i, j in zip(data.bond_is, data.bond_js)]
+        bond_inds = unique_parameter_indices(bond_type_rows, reverse=True)
+        angle_type_rows = [
+            (atom_types[i], atom_types[j], atom_types[k])
+            for i, j, k in zip(data.angle_is, data.angle_js, data.angle_ks)
+        ]
+        angle_inds = unique_parameter_indices(angle_type_rows, reverse=True)
+        proper_type_rows = [
+            (atom_types[i], atom_types[j], atom_types[k], atom_types[l])
+            for i, j, k, l in zip(data.proper_is, data.proper_js, data.proper_ks, data.proper_ls)
+        ]
+        proper_inds = unique_parameter_indices(proper_type_rows, reverse=True)
+        improper_type_rows = [
+            (atom_types[i], atom_types[j], atom_types[k], atom_types[l])
+            for i, j, k, l in zip(data.improper_is, data.improper_js, data.improper_ks, data.improper_ls)
+        ]
+        improper_inds = unique_parameter_indices(improper_type_rows)
 
         with open(ff_xml_fp, "wt") as of:
             of.write("<ForceField>\n")
@@ -418,9 +504,11 @@ class Model(nn.Module):
             of.write("  </Info>\n")
 
             of.write("  <AtomTypes>\n")
-            for (at, ei) in zip(atom_types, data.elements):
+            for ai in atom_type_inds:
+                at, ei = atom_types[ai], data.elements[ai]
                 el, am = element_i_to_name[ei], atomic_masses[ei]
-                of.write(f"    <Type element=\"{el}\" name=\"{at}\" class=\"{at}\" mass=\"{am}\"/>\n")
+                of.write((f"    <Type element=\"{el}\" name=\"{at}\" class=\"{at}\" "
+                          f"mass=\"{format_parameter(am)}\"/>\n"))
             of.write("  </AtomTypes>\n")
 
             of.write("  <Residues>\n")
@@ -430,12 +518,13 @@ class Model(nn.Module):
                 atom_inds_set = set(atom_inds)
                 of.write(f"    <Residue name=\"{mol_name}\">\n")
                 for ai in atom_inds:
-                    at, pc = atom_types[ai], partial_charges[ai]
-                    of.write(f"      <Atom name=\"{at}\" type=\"{at}\" charge=\"{pc}\"/>\n")
+                    name, at, pc = atom_names[ai], atom_types[ai], partial_charges[ai]
+                    of.write((f"      <Atom name=\"{name}\" type=\"{at}\" "
+                              f"charge=\"{format_parameter(pc)}\"/>\n"))
                 for bi, bj in zip(data.bond_is, data.bond_js):
                     if bi in atom_inds_set and bj in atom_inds_set:
-                        at1, at2 = atom_types[bi], atom_types[bj]
-                        of.write(f"      <Bond atomName1=\"{at1}\" atomName2=\"{at2}\"/>\n")
+                        name1, name2 = atom_names[bi], atom_names[bj]
+                        of.write(f"      <Bond atomName1=\"{name1}\" atomName2=\"{name2}\"/>\n")
                     elif bi in atom_inds_set or bj in atom_inds_set:
                         raise ValueError(f"Atoms {bi+1} and {bj+1} are bonded but are in different molecules")
                 of.write("    </Residue>\n")
@@ -443,49 +532,55 @@ class Model(nn.Module):
 
             if len(data.bond_is) > 0:
                 of.write("  <HarmonicBondForce>\n")
-                for (ai, aj, k, r0) in zip(data.bond_is, data.bond_js, bond_fcs, bond_r0s):
-                    at1, at2 = atom_types[ai], atom_types[aj]
-                    of.write(f"    <Bond type1=\"{at1}\" type2=\"{at2}\" length=\"{r0}\" k=\"{k}\"/>\n")
+                for bi in bond_inds:
+                    at1, at2 = bond_type_rows[bi]
+                    k, r0 = bond_fcs[bi], bond_r0s[bi]
+                    of.write((f"    <Bond type1=\"{at1}\" type2=\"{at2}\" "
+                              f"length=\"{format_parameter(r0)}\" k=\"{format_parameter(k)}\"/>\n"))
                 of.write("  </HarmonicBondForce>\n")
 
             if len(data.angle_is) > 0:
                 of.write("  <HarmonicAngleForce>\n")
-                for (ai, aj, ak, k, θ0) in zip(data.angle_is, data.angle_js, data.angle_ks,
-                                               angle_fcs, angle_θ0s):
-                    at1, at2, at3 = atom_types[ai], atom_types[aj], atom_types[ak]
+                for angle_i in angle_inds:
+                    at1, at2, at3 = angle_type_rows[angle_i]
+                    k, θ0 = angle_fcs[angle_i], angle_θ0s[angle_i]
                     of.write((f"    <Angle type1=\"{at1}\" type2=\"{at2}\" type3=\"{at3}\" "
-                              f"angle=\"{θ0}\" k=\"{k}\"/>\n"))
+                              f"angle=\"{format_parameter(θ0)}\" "
+                              f"k=\"{format_parameter(k)}\"/>\n"))
                 of.write("  </HarmonicAngleForce>\n")
 
             if len(data.proper_is) > 0 or len(data.improper_is) > 0:
                 of.write("  <PeriodicTorsionForce ordering=\"default\">\n")
-                for prop_i, (ai, aj, ak, al) in enumerate(zip(data.proper_is, data.proper_js,
-                                                              data.proper_ks, data.proper_ls)):
-                    at1, at2, at3, at4 = atom_types[ai], atom_types[aj], atom_types[ak], atom_types[al]
+                for prop_i in proper_inds:
+                    at1, at2, at3, at4 = proper_type_rows[prop_i]
                     s = f"    <Proper type1=\"{at1}\" type2=\"{at2}\" type3=\"{at3}\" type4=\"{at4}\""
                     for ti in range(6):
                         tn = ti + 1
                         tpe, tph = torsion_periodicities[ti], torsion_phases[ti]
                         k = proper_features[prop_i, ti]
-                        s += f" periodicity{tn}=\"{tpe}\" phase{tn}=\"{tph}\" k{tn}=\"{k}\""
+                        s += (f" periodicity{tn}=\"{tpe}\" phase{tn}=\"{format_parameter(tph)}\" "
+                              f"k{tn}=\"{format_parameter(k)}\"")
                     of.write(s + "/>\n")
 
-                for improp_i, (ai, aj, ak, al) in enumerate(zip(data.improper_is, data.improper_js,
-                                                                data.improper_ks, data.improper_ls)):
-                    at1, at2, at3, at4 = atom_types[ai], atom_types[aj], atom_types[ak], atom_types[al]
+                for improp_i in improper_inds:
+                    at1, at2, at3, at4 = improper_type_rows[improp_i]
                     s = f"    <Improper type1=\"{at1}\" type2=\"{at2}\" type3=\"{at3}\" type4=\"{at4}\""
                     for ti in range(2):
                         tn = ti + 1
                         tpe, tph = torsion_periodicities[ti], torsion_phases[ti]
                         k = improper_features[improp_i, ti]
-                        s += f" periodicity{tn}=\"{tpe}\" phase{tn}=\"{tph}\" k{tn}=\"{k}\""
+                        s += (f" periodicity{tn}=\"{tpe}\" phase{tn}=\"{format_parameter(tph)}\" "
+                              f"k{tn}=\"{format_parameter(k)}\"")
                     of.write(s + "/>\n")
                 of.write("  </PeriodicTorsionForce>\n")
 
-            of.write(f"  <NonbondedForce coulomb14scale=\"{self.weight_14_coul}\" lj14scale=\"0.0\">\n")
+            of.write((f"  <NonbondedForce coulomb14scale=\"{format_parameter(self.weight_14_coul)}\" "
+                      f"lj14scale=\"{format_parameter(0)}\">\n"))
             of.write("    <UseAttributeFromResidue name=\"charge\"/>\n")
-            for at in atom_types:
-                of.write(f"    <Atom type=\"{at}\" sigma=\"1\" epsilon=\"0\"/>\n")
+            for ai in atom_type_inds:
+                at = atom_types[ai]
+                of.write((f"    <Atom type=\"{at}\" sigma=\"{format_parameter(1)}\" "
+                          f"epsilon=\"{format_parameter(0)}\"/>\n"))
             of.write("  </NonbondedForce>\n")
 
             # The 1-4 weighting is 0 for CustomNonbondedForce with bondCutoff=3
@@ -493,12 +588,16 @@ class Model(nn.Module):
                       "(((beta*exp(alpha))/(alpha-beta))*exp(-alpha*(r/((2^(1/6))*((sigma1+sigma2)/2))))"
                       "-((alpha*exp(beta))/(alpha-beta))*exp(-beta*(r/((2^(1/6))*((sigma1+sigma2)/2))))"
                       ")\" bondCutoff=\"3\">\n"))
-            of.write(f"    <GlobalParameter name=\"alpha\" defaultValue=\"{self.dexp_alpha}\"/>\n")
-            of.write(f"    <GlobalParameter name=\"beta\" defaultValue=\"{self.dexp_beta}\"/>\n")
+            of.write((f"    <GlobalParameter name=\"alpha\" "
+                      f"defaultValue=\"{format_parameter(self.dexp_alpha)}\"/>\n"))
+            of.write((f"    <GlobalParameter name=\"beta\" "
+                      f"defaultValue=\"{format_parameter(self.dexp_beta)}\"/>\n"))
             of.write("    <PerParticleParameter name=\"sigma\"/>\n")
             of.write("    <PerParticleParameter name=\"epsilon\"/>\n")
-            for at, σ, ϵ in zip(atom_types, σs, ϵs):
-                of.write(f"    <Atom type=\"{at}\" sigma=\"{σ}\" epsilon=\"{ϵ}\"/>\n")
+            for ai in atom_type_inds:
+                at, σ, ϵ = atom_types[ai], σs[ai], ϵs[ai]
+                of.write((f"    <Atom type=\"{at}\" sigma=\"{format_parameter(σ)}\" "
+                          f"epsilon=\"{format_parameter(ϵ)}\"/>\n"))
             of.write("  </CustomNonbondedForce>\n")
             of.write("</ForceField>\n")
 
@@ -514,8 +613,8 @@ class Model(nn.Module):
                     of.write(f"  <Residue name=\"{mol_name}\">\n")
                     for bi, bj in zip(data.bond_is, data.bond_js):
                         if bi in atom_inds_set and bj in atom_inds_set:
-                            at1, at2 = atom_types[bi], atom_types[bj]
-                            of.write(f"    <Bond from=\"{at1}\" to=\"{at2}\"/>\n")
+                            name1, name2 = atom_names[bi], atom_names[bj]
+                            of.write(f"    <Bond from=\"{name1}\" to=\"{name2}\"/>\n")
                         elif bi in atom_inds_set or bj in atom_inds_set:
                             raise ValueError(f"Atoms {bi+1} and {bj+1} are bonded but are in different molecules")
                     of.write("  </Residue>\n")
@@ -526,7 +625,7 @@ class Model(nn.Module):
         if positions is None:
             raise ValueError("write_pdb requires topology positions")
 
-        atom_types = get_atom_types(data, prefix=prefix)
+        atom_names = get_atom_names(data, prefix=prefix)
         prefix_str = "" if prefix is None else prefix + "_"
         write_cif = os.path.splitext(os.fspath(pdb_fp))[1].lower() in (".cif", ".mmcif")
         top_openmm = topology.to_openmm()
@@ -549,7 +648,7 @@ class Model(nn.Module):
 
         residue_assignments = {}
         for atom, residue_id, template_ai in zip(top_atoms, atom_residue_ids, data.topology_atom_template_inds):
-            atom_name = atom_types[template_ai]
+            atom_name = atom_names[template_ai]
             residue_name = prefix_str + data.mol_names[data.molecule_inds[template_ai]]
             if not write_cif and len(atom_name) > 4:
                 raise ValueError(f"PDB atom name {atom_name} is longer than 4 characters")
