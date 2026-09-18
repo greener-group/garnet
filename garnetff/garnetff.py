@@ -18,7 +18,7 @@ from warnings import warn
 from io import StringIO
 import os
 
-pkg_version = "0.1.0"
+pkg_version = "1.0.0"
 model_version = "v_0_1_0.pt" # Only needs to change if the trained model changes
 
 pkd_dir = os.path.dirname(os.path.realpath(__file__))
