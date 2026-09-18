@@ -70,15 +70,34 @@ simulation.context.setVelocitiesToTemperature(temp)
 simulation.step(1000)
 ```
 Disulfide bridges need to be explicitly given via `CONECT` records, unlike when reading in with OpenMM directly.
+
 The `Topology` can also be written to an OpenMM force field XML file:
 ```python
 garnet.topology_to_openmm_xml("gb3.xml", topology)
 ```
 In this case each molecule is written out as a single residue.
-This can cause problems for polymers when trying to set up an OpenMM system with the force field file, since OpenMM will look for separate residue entries based on the residue names in the PDB file.
-Writing force field files like this is therefore only recommended for non-polymers, though OpenMM [may add support for this in future](https://github.com/openmm/openmm/issues/5178).
-The optional keyword arguments `mol_names`, to specify the name of each molecule, and `prefix`, to give unique atom names to an XML file and avoid clashes with other files, are available.
+The following gives a way to set up the above system using XML files:
+```python
+garnet.topology_to_openmm_xml("gb3.xml", topology, write_pdb="gb3_garnet.cif")
+
+pdb = PDBxFile("gb3_garnet.cif")
+forcefield = ForceField("gb3.xml")
+
+system = forcefield.createSystem(
+    pdb.topology,
+    nonbondedMethod=PME,
+    nonbondedCutoff=1*nanometer,
+    constraints=HBonds,
+    rigidWater=True,
+)
+```
 However, currently only one force field XML can be loaded with `ForceField` from OpenMM [due to the way custom non-bonded forces work](https://github.com/openmm/openmm/issues/5154).
+
+`topology_to_openmm_xml` has optional keyword arguments:
+- `mol_names`: a list of strings to specify the name of each molecule.
+- `prefix`: a string to give unique atom names and avoid clashes with other XML files.
+- `write_top`: write an XML file of the bonding topology to the given file path.
+- `write_pdb`: write a PDB or mmCIF file (determined by the extension) with molecules having a single residue name to the given file path.
 
 From a SMILES string:
 ```python
