@@ -1481,7 +1481,8 @@ function mol_to_system(mol_id, feature_line, coords, boundary, model_atom_embed,
 
     partial_charges = -charge_e_inv_s .+ charge_inv_s .* charge_factors
     weight_14_vdw_raw = model_global_params()[1]
-    # 1-4 weight is 0 for other functional forms since OpenMM custom force doesn't support it
+    # 1-4 weight is 0 for other functional forms since OpenMM CustomNonbondedForce doesn't
+    #   support it, though it could be added with bonded terms
     if vdw_functional_form == "lj" && mixing_function == "lb"
         weight_14_vdw = sigmoid(weight_14_vdw_raw)
     else
@@ -1716,7 +1717,8 @@ function features_to_ff_xml(io, mol_ids_or_feature_line, model_atom_embed, model
 
     partial_charges = -charge_e_inv_s .+ charge_inv_s .* charge_factors
     weight_14_vdw_raw = model_global_params()[1]
-    # 1-4 weight is 0 for other functional forms since OpenMM custom force doesn't support it
+    # 1-4 weight is 0 for other functional forms since OpenMM CustomNonbondedForce doesn't
+    #   support it, though it could be added with bonded terms
     if vdw_functional_form == "lj" && mixing_function == "lb"
         weight_14_vdw = sigmoid(weight_14_vdw_raw)
     else
