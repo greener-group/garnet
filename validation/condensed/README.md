@@ -22,4 +22,4 @@ Details about the experimental data and simulation and analysis methods can be f
 
 2. Acree and Chickos. Phase Transition Enthalpy Measurements of Organic and Organometallic Compounds. NIST Chemistry WebBook, NIST Standard Reference Database Number 69. DOI: https://doi.org/10.18434/T4D303
 
-3. Blanco-González, Schulze, Rovers and Greener. Training a force field for proteins and small molecules from scratch. arXiv. 2026. DOI: https://doi.org/10.48550/arXiv.2603.16770
+3. Blanco-González, Schulze, Rovers and Greener. Training a force field for proteins and small molecules from scratch. Chemical Science. 2026. DOI: https://doi.org/10.1039/d6sc02874h

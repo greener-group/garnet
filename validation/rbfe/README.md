@@ -138,4 +138,4 @@ These steps are described in details in OpenFE’s documentation.
 
 3. OpenFE Industry Benchmarking Project GitHub: OpenFE Industry Benchmarking Project Github: https://github.com/OpenFreeEnergy/IndustryBenchmarks2024
 
-4. Garnet paper: Blanco-González, Schulze, Rovers, Greener. Training a force field for proteins and small molecules from scratch. arXiv. 2026. DOI: https://doi.org/10.48550/arXiv.2603.16770
+4. Garnet paper: Blanco-González, Schulze, Rovers, Greener. Training a force field for proteins and small molecules from scratch. Chemical Science. 2026. DOI: https://doi.org/10.1039/d6sc02874h

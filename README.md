@@ -5,7 +5,7 @@
 
 If you use the force field, please cite the paper:
 
-- A Blanco-González, T K Schulze, E Rovers, J G Greener. Training a force field for proteins and small molecules from scratch, [arXiv](https://doi.org/10.48550/arXiv.2603.16770) (2026).
+- A Blanco-González*, T K Schulze*, E Rovers, J G Greener. Training a force field for proteins and small molecules from scratch, [Chemical Science](https://doi.org/10.1039/d6sc02874h) (2026).
 
 ## Using the force field
 
